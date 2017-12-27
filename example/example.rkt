@@ -3,1109 +3,600 @@
 (require srfi/25)
 
 (define (1+ n)
-
   (+ 1 n)
-
   )
 
-;òðåõëîéíàÿ íåéðîííàÿ ñåòü (âõîä, ñêðûòûé ñëîé, âûõîä
+;Ñ‚Ñ€ÐµÑ…Ð»Ð¾Ð¹Ð½Ð°Ñ Ð½ÐµÐ¹Ñ€Ð¾Ð½Ð½Ð°Ñ ÑÐµÑ‚ÑŒ (Ð²Ñ…Ð¾Ð´, ÑÐºÑ€Ñ‹Ñ‚Ñ‹Ð¹ ÑÐ»Ð¾Ð¹, Ð²Ñ‹Ñ…Ð¾Ð´
 
-(define NUMIN 0)  ;ðàçìåðíîñòü âõîäà
+(define NUMIN 0)  ;Ñ€Ð°Ð·Ð¼ÐµÑ€Ð½Ð¾ÑÑ‚ÑŒ Ð²Ñ…Ð¾Ð´Ð°
+(define NUMHID 0) ;Ñ€Ð°Ð·Ð¼ÐµÑ€Ð½Ð¾ÑÑ‚ÑŒ ÑÐºÑ€Ñ‹Ñ‚Ð¾Ð³Ð¾ ÑÐ»Ð¾Ñ
+(define NUMOUT 0) ;Ñ€Ð°Ð·Ð¼ÐµÑ€Ð½Ð¾ÑÑ‚ÑŒ Ð²Ñ‹Ñ…Ð¾Ð´Ð°
 
-(define NUMHID 0) ;ðàçìåðíîñòü ñêðûòîãî ñëîÿ
+;Ð¼Ð°Ñ‚Ñ€Ð¸Ñ†Ñ‹ Ð²ÐµÑÐ¾Ð²Ñ‹Ñ… ÐºÐ¾ÑÑ„Ñ„Ð¸Ñ†Ð¸ÐµÐ½Ñ‚Ð¾Ð²
+(define WeightIH null) ;ÑÐ¾ÐµÐ´Ð¸Ð½ÐµÐ½Ð¸Ñ Ð²Ñ…Ð¾Ð´Ð° Ð¸ ÑÐºÑ€Ñ‹Ñ‚Ð¾Ð³Ð¾ ÑÐ»Ð¾Ñ
+(define WeightHO null) ;ÑÐ¾ÐµÐ´Ð¸Ð½ÐµÐ½Ð¸Ñ ÑÐºÑ€Ñ‹Ñ‚Ð¾Ð³Ð¾ ÑÐ»Ð¾Ñ Ð¸ Ð²Ñ‹Ñ…Ð¾Ð´a
 
-(define NUMOUT 0) ;ðàçìåðíîñòü âûõîäà
-
-;ìàòðèöû âåñîâûõ êîýôôèöèåíòîâ
-
-(define WeightIH null) ;ñîåäèíåíèÿ âõîäà è ñêðûòîãî ñëîÿ
-
-(define WeightHO null) ;ñîåäèíåíèÿ ñêðûòîãî ñëîÿ è âûõîäa
-
-;äëÿ íîðìàëèçàöèè
-
+;Ð´Ð»Ñ Ð½Ð¾Ñ€Ð¼Ð°Ð»Ð¸Ð·Ð°Ñ†Ð¸Ð¸
 (define mini 0)
-
-(define maxi 0)
-
+(define maxi 0) 
 (define mino 0)
-
-(define maxo 0)
-
+(define maxo 0) 
 (define GlobalMinError 100000000)
 
-;ôóíêöèè äëÿ ñîçäàíèÿ âåêòîðîâ è ìàòðèö
+;Ñ„ÑƒÐ½ÐºÑ†Ð¸Ð¸ Ð´Ð»Ñ ÑÐ¾Ð·Ð´Ð°Ð½Ð¸Ñ Ð²ÐµÐºÑ‚Ð¾Ñ€Ð¾Ð² Ð¸ Ð¼Ð°Ñ‚Ñ€Ð¸Ñ†
 
 (define (make-vector size)
-
-  (if (and (integer? size) (positive? size))
-
-          (make-array (shape 0 size) 0)
-
-          (error "Íåäîçâîëåííàÿ ðàçìåðíîñòü âåêòîðà")
-
-          )
-
+  (if (and (integer? size) (positive? size)) 
+      (make-array (shape 0 size) 0)
+      (error "ÐÐµÐ´Ð¾Ð·Ð²Ð¾Ð»ÐµÐ½Ð½Ð°Ñ Ñ€Ð°Ð·Ð¼ÐµÑ€Ð½Ð¾ÑÑ‚ÑŒ Ð²ÐµÐºÑ‚Ð¾Ñ€Ð°")
+      )
   )
 
 (define (make-matrix m n)
-
   (if (and (integer? m) (positive? m))
-
-          (make-array (shape 0 m 0 n) 0)
-
-          (error "Íåäîçâîëåííàÿ ðàçìåðíîñòü ìàòðèöû")
-
-          )
-
+      (make-array (shape 0 m 0 n) 0)
+      (error "ÐÐµÐ´Ð¾Ð·Ð²Ð¾Ð»ÐµÐ½Ð½Ð°Ñ Ñ€Ð°Ð·Ð¼ÐµÑ€Ð½Ð¾ÑÑ‚ÑŒ Ð¼Ð°Ñ‚Ñ€Ð¸Ñ†Ñ‹")
+      )
   )
 
 (define (vector-from-matrix m index)
-
   (define res (make-vector (array-end m 1)))
-
   (do [(i 0 (+ 1 i))] ((= i (array-end m 1)) res)
-
-        (setvvalue res i (getmvalue m index i))
-
-        )
-
+    (setvvalue res i (getmvalue m index i))
+    )
   )
 
 (define (print-vector v)
-
   (do [(i 0 (+ 1 i))] ((= i (array-end v 0)) (printf "\n"))
-
-        (printf "~S " (getvvalue v i))
-
-        )
-
+    (printf "~S " (getvvalue v i))
+    )
   )
-
-;ôóíêöèè äëÿ ïîëó÷åíèÿ/óñòàíîâêè çíà÷åíèé âåêòîðîâ è ìàòðèö
+;Ñ„ÑƒÐ½ÐºÑ†Ð¸Ð¸ Ð´Ð»Ñ Ð¿Ð¾Ð»ÑƒÑ‡ÐµÐ½Ð¸Ñ/ÑƒÑÑ‚Ð°Ð½Ð¾Ð²ÐºÐ¸ Ð·Ð½Ð°Ñ‡ÐµÐ½Ð¸Ð¹ Ð²ÐµÐºÑ‚Ð¾Ñ€Ð¾Ð² Ð¸ Ð¼Ð°Ñ‚Ñ€Ð¸Ñ†
 
 (define (getvvalue obj i)
-
   (array-ref obj i)
-
   )
+
 
 (define (getmvalue obj i j)
-
   (array-ref obj i j)
-
   )
 
+
 (define (setvvalue vec i val)
-
   (array-set! vec i val)
-
   )
 
 (define (setmvalue matrix i j val)
-
   (array-set! matrix i j val)
-
   )
 
-(define (rando)
-
+(define (rando) 
   (/ (random 32000) 32000.0)
-
   )
 
-;ñîçäàíèå íåéðîííîé ñåòè
+
+;ÑÐ¾Ð·Ð´Ð°Ð½Ð¸Ðµ Ð½ÐµÐ¹Ñ€Ð¾Ð½Ð½Ð¾Ð¹ ÑÐµÑ‚Ð¸
 
 (define (make-network _NUMIN _NUMOUT _NUMHID)
-
   (set! NUMIN _NUMIN)
-
   (set! NUMOUT _NUMOUT)
-
   (set! NUMHID _NUMHID)
-
- 
-
+  
   (set! WeightIH (make-matrix (+ 1 NUMIN) NUMHID))
-
   (set! WeightHO (make-matrix (+ 1 NUMHID) NUMOUT))
-
- 
-
+  
   (define smallwt 0.5)
-
- 
-
-  ;óñòàíàâëèâàåì ñëó÷àéíûå âåñîâûå êîýôôèöèåíòû
-
- 
-
+  
+  ;ÑƒÑÑ‚Ð°Ð½Ð°Ð²Ð»Ð¸Ð²Ð°ÐµÐ¼ ÑÐ»ÑƒÑ‡Ð°Ð¹Ð½Ñ‹Ðµ Ð²ÐµÑÐ¾Ð²Ñ‹Ðµ ÐºÐ¾ÑÑ„Ñ„Ð¸Ñ†Ð¸ÐµÐ½Ñ‚Ñ‹
+  
   (do [(j 0 (+ 1 j))] ((= j NUMHID))
-
-        (do [(i 0 (+ 1 i))] ((= i (+ 1 NUMIN)))
-
-          (setmvalue WeightIH i j  (* 2.0 (- (rando) 0.5) smallwt))
-
-          )
-
-        )
-
- 
-
+    (do [(i 0 (+ 1 i))] ((= i (+ 1 NUMIN)))
+      (setmvalue WeightIH i j  (* 2.0 (- (rando) 0.5) smallwt))
+      )
+    )
+  
   (do [(k 0 (+ 1 k))] ((= k NUMOUT))
-
-        (do [(j 0 (+ 1 j))] ((= j (+ 1 NUMHID)))
-
-          (setmvalue WeightHO j k (* 2.0 (- (rando) 0.5) smallwt))
-
-          )
-
-        )
-
+    (do [(j 0 (+ 1 j))] ((= j (+ 1 NUMHID)))
+      (setmvalue WeightHO j k (* 2.0 (- (rando) 0.5) smallwt))
+      )
+    )
   )
 
-;îáó÷åíèå íåéðîííîé ñåòè
 
+
+;Ð¾Ð±ÑƒÑ‡ÐµÐ½Ð¸Ðµ Ð½ÐµÐ¹Ñ€Ð¾Ð½Ð½Ð¾Ð¹ ÑÐµÑ‚Ð¸
 (define (train TrainInput TrainTarget Err MaxCount DoOut NetworkFile)
-
   (let* (
-
-             [Error (+ Err 1)]
-
-             [eta 0.5]
-
-             [alpha 0.9]
-
-             [NUMPAT (array-end TrainInput 0)] ;÷èñëî îáó÷àþùèõ øàáëîíîâ
-
-             [ranpat (make-vector NUMPAT)]
-
-             [NumPattern NUMPAT]
-
-             [NumInput NUMIN]
-
-             [NumHidden NUMHID]
-
-             [NumOutput NUMOUT]
-
-             ;âðåìåííûå ìàññèâû
-
-             [DeltaWeightIH (make-matrix (1+ NUMIN) NUMHID)]
-
-             [DeltaWeightHO (make-matrix (1+ NUMHID) NUMOUT)]
-
-             [SumDOW (make-vector NUMHID)]
-
-             [DeltaH (make-vector NUMHID)]
-
-             [DeltaO (make-vector NUMOUT)]
-
-             [SumH (make-vector NUMHID)]
-
-             [Hidden (make-vector NUMHID)]
-
-             [SumO (make-vector NUMOUT)]
-
-             [Output (make-vector NUMOUT)]
-
-             [Input (make-matrix NUMPAT NUMIN)]
-
-             [Target (make-matrix NUMPAT NUMOUT)]
-
-             )
-
-   
-
-        ;êîïèðóåì òðåíèðîâî÷íûå ìàòðèöû âî âðåìåííûå âî èçáåæàíèå ïîð÷è
-
-        (do [(i 0 (+ 1 i))] ((= i NUMPAT))
-
-          (do [(k 0 (+ 1 k))] ((= k NUMIN))
-
-            (setmvalue Input i k (getmvalue TrainInput i k))
-
-            )
-
-          )
-
-        (do [(i 0 (+ 1 i))] ((= i NUMPAT))
-
-          (do [(k 0 (+ 1 k))] ((= k NUMOUT))            
-
-            (setmvalue Target i k (getmvalue TrainTarget i k))
-
-            )
-
-          )
-
-   
-
-        ;åñëè ñóùåñòâóåò ôàéë NetworkFile - çàãðóçèì åãî äëÿ äîîáó÷åíèÿ
-
-        (cond
-
-          [(file-exists? NetworkFile) (read-network NetworkFile)]
-
-          [#t
-
-           (set! mini (getmvalue Input 0 0))
-
-           (set! maxi (getmvalue Input 0 0))
-
-           (set! mino (getmvalue Target 0 0))
-
-           (set! maxo (getmvalue Target 0 0))
-
-   
-
-           ;ïîèñê ãðàíè÷íûõ çíà÷åíèé â ÷èñëîâûõ ìàññèâàõ
-
-           (do [(i 0 (+ 1 i))] ((= i NumPattern))
-
-             (do [(k 0 (+ 1 k))] ((= k NumInput))            
-
-               (when (> mini (getmvalue Input i k))
-
-                 (set! mini (getmvalue Input i k))
-
-                 )
-
-               (when (< maxi (getmvalue Input i k))
-
-                 (set! maxi (getmvalue Input i k))
-
-                 )
-
-               )
-
-             (do [(k 0 (+ 1 k))] ((= k NumOutput))            
-
-               (when (> mino (getmvalue Target i k))
-
-                 (set! mino (getmvalue Target i k))
-
-                 )
-
-               (when (< maxo (getmvalue Target i k))
-
-                 (set! maxo (getmvalue Target i k))
-
-                 )
-
-               )
-
-             )
-
-           ]
-
-          )
-
-   
-
-        ;íîðìàëèçàöèÿ
-
-        (do [(i 0 (+ 1 i))] ((= i NumPattern))
-
-          (do [(k 0 (+ 1 k))] ((= k NumInput))            
-
-            (setmvalue Input i k
-
-                       (/ (- (getmvalue Input i k) mini) (- maxi mini))
-
-                       )
-
-            )
-
-          (do [(k 0 (+ 1 k))] ((= k NumOutput))            
-
-            (setmvalue Target i k
-
-                       (/ (- (getmvalue Target i k) mino) (- maxo mino))
-
-                       )
-
-            )
-
-          )
-
-   
-
-        ;öèêë îáó÷åíèÿ ïî äîñòèæåíèþ çàäàííîé îøèáêè èëè ÷èñëà èòåðàöèé
-
-        (do [(epoch 0 (+ 1 epoch)) ] ( (or (= epoch MaxCount) (< Error Err)) (write-network NetworkFile) Error)            
-
-          ;ïåðåìåøèâàåì øàáëîíû
-
-          (do [(p 0 (+ 1 p))] ((= p NumPattern))
-
-            (setvvalue ranpat p (random NumPattern))
-
-            )
-
-          (set! Error 0.0)
-
-         
-
-          ;öèêë îáó÷åíèÿ ïî øàáëîíàì
-
-          (do [(np 0 (+ 1 np)) (p (getvvalue ranpat 0) (getvvalue ranpat np))] ((= np NumPattern))                
-
-            ;âûáèðàåì øàáëîí
-
-            ;àêòèâàöèÿ ñêðûòîãî ñëîÿ
-
-            (do [(j 0 (+ 1 j))] ((= j NumHidden))                
-
-              (setvvalue SumH j (getmvalue WeightIH 0 j))
-
-              (do [(i 0 (+ 1 i))] ((= i NumInput))
-
-                (setvvalue SumH j
-
-                           (+ (getvvalue SumH j)
-
-                              (*
-
-                               (getmvalue Input p i)
-
-                               (getmvalue WeightIH (1+ i) j)
-
-                               )
-
-                              )
-
-                           )
-
-                )
-
-              (setvvalue Hidden j (/ 1.0
-
-                                     (+
-
-                                      1.0
-
-                                      (exp (- (getvvalue SumH j)))
-
-                                      )    
-
-                                     )
-
-                         )
-
-              )
-
-            ;àêòèâàöèÿ âûõîäíîãî ñëîÿ è âû÷èñëåíèå îøèáêè
-
-            (do [(k 0 (+ 1 k))] ((= k NumOutput))            
-
-              (setvvalue SumO k (getmvalue WeightHO 0 k))
-
-              (do [(j 0 (+ 1 j))] ((= j NumHidden))                
-
-                (setvvalue SumO k (+
-
-                                   (getvvalue SumO k)
-
-                                   (*
-
-                                    (getvvalue Hidden j)
-
-                                    (getmvalue WeightHO (1+ j) k)
-
-                                    )
-
-                                   )
-
-                           )
-
-                )
-
-              ;ñèãìîèäàëüíûé âûâîä
-
-             
-
-              (setvvalue Output k (/ 1.0
-
-                                     (+
-
-                                      1.0
-
-                                      (exp (- (getvvalue SumO k)))
-
-                                      )    
-
-                                     )
-
-                         )
-
-              (set! Error (+
-
-                           Error
-
-                           (*
-
-                            0.5
-
-                            (- (getmvalue Target p k) (getvvalue Output k))
-
-                            (- (getmvalue Target p k) (getvvalue Output k))
-
-                            )
-
-                           )
-
-                    )
-
-              (setvvalue DeltaO k
-
-                         (*
-
-                          (- (getmvalue Target p k) (getvvalue Output k))
-
-                          (getvvalue Output k)
-
-                          (- 1.0 (getvvalue Output k))
-
-                          )
-
-                         )
-
-              )
-
-            ;îáðàòíîå ðàñïðîñòðàíåíèå îøèáêè íà ñêðûòûé ñëîé
-
-            (do [(j 0 (+ 1 j))] ((= j NumHidden))                
-
-              (setvvalue SumDOW j 0.0)
-
-              (do [(k 0 (+ 1 k))] ((= k NumOutput))            
-
-                (setvvalue SumDOW j
-
-                           (+
-
-                            (getvvalue SumDOW j)
-
-                            (*
-
-                             (getmvalue WeightHO (1+ j) k)
-
-                             (getvvalue DeltaO k)
-
-                             )
-
-                            )
-
-                           )
-
-                )
-
-              (setvvalue DeltaH j
-
-                         (*
-
-                          (getvvalue SumDOW j)
-
-                          (getvvalue Hidden j)
-
-                          (- 1.0 (getvvalue Hidden j))
-
-                          )
-
-                         )
-
-              )
-
-            (do [(j 0 (+ 1 j))] ((= j NumHidden))                
-
-              (setmvalue DeltaWeightIH 0 j
-
-                         (+
-
-                          (*
-
-                           eta
-
-                           (getvvalue DeltaH j)
-
-                           )
-
-                          (*
-
-                           alpha
-
-                           (getmvalue DeltaWeightIH 0 j)
-
-                           )
-
-                          )
-
-                         )
-
-              (setmvalue WeightIH 0 j
-
-                         (+
-
-                          (getmvalue WeightIH 0 j)
-
-                          (getmvalue DeltaWeightIH 0 j)
-
-                          )
-
-                         )
-
-              (do [(i 0 (+ 1 i))] ((= i NumInput))
-
-                (setmvalue DeltaWeightIH (1+ i) j
-
-                           (+
-
-                            (*
-
-                             eta
-
-                             (getmvalue Input p i)
-
-                             (getvvalue DeltaH j)
-
-                             )
-
-                            (*
-
-                             alpha
-
-                             (getmvalue DeltaWeightIH (1+ i) j)
-
-                             )
-
-                            )
-
-                           )
-
-                (setmvalue WeightIH (1+ i) j
-
-                           (+
-
-                            (getmvalue WeightIH (1+ i) j)
-
-                            (getmvalue DeltaWeightIH (1+ i) j)
-
-                            )
-
-                           )
-
-                )
-
-              )
-
-            (do [(k 0 (+ 1 k))] ((= k NumOutput))            
-
-              (setmvalue DeltaWeightHO 0 k
-
-                         (+
-
-                          (*
-
-                           eta
-
-                           (getvvalue DeltaO k)
-
-                           )
-
-                          (*
-
-                           alpha
-
-                           (getmvalue DeltaWeightHO 0 k)
-
-                           )
-
-                          )
-
-                         )
-
-              (setmvalue WeightHO 0 k
-
-                         (+
-
-                          (getmvalue WeightHO 0 k)
-
-                          (getmvalue DeltaWeightHO 0 k)
-
-                          )
-
-                         )
-
-              (do [(j 0 (+ 1 j))] ((= j NumHidden))                
-
-                (setmvalue DeltaWeightHO (1+ j) k
-
-                           (+
-
-                            (*
-
-                             eta
-
-                             (getvvalue Hidden j)
-
-                             (getvvalue DeltaO k)
-
-                             )
-
-                            (*
-
-                             alpha
-
-                             (getmvalue DeltaWeightHO (1+ j) k)
-
-                             )
-
-                            )
-
-                           )
-
-                (setmvalue WeightHO (1+ j) k
-
-                           (+
-
-                            (getmvalue WeightHO (1+ j) k)
-
-                            (getmvalue DeltaWeightHO (1+ j) k)
-
-                            )
-
-                           )
-
-                )
-
-              )
-
-            )
-
-          (when (and DoOut (= (remainder epoch 1024) 0));îòëàäî÷íûé âûâîä
-
-            (printf "epoch=~S, error=~S\n" epoch Error)
-
-            )
-
-          (when (< Error GlobalMinError)
-
-            (set! GlobalMinError Error)
-
-            (printf "epoch=~S, (min)error=~S\n" epoch Error)
-
-            (write-network NetworkFile)
-
-            )
-
-          )
-
+         [Error (+ Err 1)]
+         [eta 0.5]
+         [alpha 0.9] 
+         [NUMPAT (array-end TrainInput 0)] ;Ñ‡Ð¸ÑÐ»Ð¾ Ð¾Ð±ÑƒÑ‡Ð°ÑŽÑ‰Ð¸Ñ… ÑˆÐ°Ð±Ð»Ð¾Ð½Ð¾Ð²
+         [ranpat (make-vector NUMPAT)]
+         [NumPattern NUMPAT]
+         [NumInput NUMIN]
+         [NumHidden NUMHID]
+         [NumOutput NUMOUT]
+         ;Ð²Ñ€ÐµÐ¼ÐµÐ½Ð½Ñ‹Ðµ Ð¼Ð°ÑÑÐ¸Ð²Ñ‹
+         [DeltaWeightIH (make-matrix (1+ NUMIN) NUMHID)]
+         [DeltaWeightHO (make-matrix (1+ NUMHID) NUMOUT)]
+         [SumDOW (make-vector NUMHID)]
+         [DeltaH (make-vector NUMHID)]
+         [DeltaO (make-vector NUMOUT)]
+         [SumH (make-vector NUMHID)]
+         [Hidden (make-vector NUMHID)]
+         [SumO (make-vector NUMOUT)]
+         [Output (make-vector NUMOUT)]
+         [Input (make-matrix NUMPAT NUMIN)]
+         [Target (make-matrix NUMPAT NUMOUT)]
+         )
+    
+    ;ÐºÐ¾Ð¿Ð¸Ñ€ÑƒÐµÐ¼ Ñ‚Ñ€ÐµÐ½Ð¸Ñ€Ð¾Ð²Ð¾Ñ‡Ð½Ñ‹Ðµ Ð¼Ð°Ñ‚Ñ€Ð¸Ñ†Ñ‹ Ð²Ð¾ Ð²Ñ€ÐµÐ¼ÐµÐ½Ð½Ñ‹Ðµ Ð²Ð¾ Ð¸Ð·Ð±ÐµÐ¶Ð°Ð½Ð¸Ðµ Ð¿Ð¾Ñ€Ñ‡Ð¸
+    (do [(i 0 (+ 1 i))] ((= i NUMPAT))
+      (do [(k 0 (+ 1 k))] ((= k NUMIN))
+        (setmvalue Input i k (getmvalue TrainInput i k))
         )
+      )
+    (do [(i 0 (+ 1 i))] ((= i NUMPAT))
+      (do [(k 0 (+ 1 k))] ((= k NUMOUT))        
+        (setmvalue Target i k (getmvalue TrainTarget i k))
+        )
+      )
+    
+    ;ÐµÑÐ»Ð¸ ÑÑƒÑ‰ÐµÑÑ‚Ð²ÑƒÐµÑ‚ Ñ„Ð°Ð¹Ð» NetworkFile - Ð·Ð°Ð³Ñ€ÑƒÐ·Ð¸Ð¼ ÐµÐ³Ð¾ Ð´Ð»Ñ Ð´Ð¾Ð¾Ð±ÑƒÑ‡ÐµÐ½Ð¸Ñ
+    (cond
+      [(file-exists? NetworkFile) (read-network NetworkFile)]
+      [#t
+       (set! mini (getmvalue Input 0 0))
+       (set! maxi (getmvalue Input 0 0))
+       (set! mino (getmvalue Target 0 0))
+       (set! maxo (getmvalue Target 0 0))
+    
+       ;Ð¿Ð¾Ð¸ÑÐº Ð³Ñ€Ð°Ð½Ð¸Ñ‡Ð½Ñ‹Ñ… Ð·Ð½Ð°Ñ‡ÐµÐ½Ð¸Ð¹ Ð² Ñ‡Ð¸ÑÐ»Ð¾Ð²Ñ‹Ñ… Ð¼Ð°ÑÑÐ¸Ð²Ð°Ñ…
+       (do [(i 0 (+ 1 i))] ((= i NumPattern))
+         (do [(k 0 (+ 1 k))] ((= k NumInput))        
+           (when (> mini (getmvalue Input i k)) 
+             (set! mini (getmvalue Input i k))
+             )
+           (when (< maxi (getmvalue Input i k)) 
+             (set! maxi (getmvalue Input i k))
+             )
+           )
+         (do [(k 0 (+ 1 k))] ((= k NumOutput))        
+           (when (> mino (getmvalue Target i k)) 
+             (set! mino (getmvalue Target i k))
+             )
+           (when (< maxo (getmvalue Target i k)) 
+             (set! maxo (getmvalue Target i k))
+             )
+           )
+         )
+       ]
+      )
+    
+    ;Ð½Ð¾Ñ€Ð¼Ð°Ð»Ð¸Ð·Ð°Ñ†Ð¸Ñ
+    (do [(i 0 (+ 1 i))] ((= i NumPattern))
+      (do [(k 0 (+ 1 k))] ((= k NumInput))        
+        (setmvalue Input i k 
+                   (/ (- (getmvalue Input i k) mini) (- maxi mini))
+                   )
+        )
+      (do [(k 0 (+ 1 k))] ((= k NumOutput))        
+        (setmvalue Target i k 
+                   (/ (- (getmvalue Target i k) mino) (- maxo mino))
+                   )
+        )
+      )
 
+    
+    ;Ñ†Ð¸ÐºÐ» Ð¾Ð±ÑƒÑ‡ÐµÐ½Ð¸Ñ Ð¿Ð¾ Ð´Ð¾ÑÑ‚Ð¸Ð¶ÐµÐ½Ð¸ÑŽ Ð·Ð°Ð´Ð°Ð½Ð½Ð¾Ð¹ Ð¾ÑˆÐ¸Ð±ÐºÐ¸ Ð¸Ð»Ð¸ Ñ‡Ð¸ÑÐ»Ð° Ð¸Ñ‚ÐµÑ€Ð°Ñ†Ð¸Ð¹
+    (do [(epoch 0 (+ 1 epoch)) ] ( (or (= epoch MaxCount) (< Error Err)) (write-network NetworkFile) Error)        
+      ;Ð¿ÐµÑ€ÐµÐ¼ÐµÑˆÐ¸Ð²Ð°ÐµÐ¼ ÑˆÐ°Ð±Ð»Ð¾Ð½Ñ‹
+      (do [(p 0 (+ 1 p))] ((= p NumPattern))
+        (setvvalue ranpat p (random NumPattern))
+        )
+      (set! Error 0.0)
+      
+      ;Ñ†Ð¸ÐºÐ» Ð¾Ð±ÑƒÑ‡ÐµÐ½Ð¸Ñ Ð¿Ð¾ ÑˆÐ°Ð±Ð»Ð¾Ð½Ð°Ð¼
+      (do [(np 0 (+ 1 np)) (p (getvvalue ranpat 0) (getvvalue ranpat np))] ((= np NumPattern))            
+        ;Ð²Ñ‹Ð±Ð¸Ñ€Ð°ÐµÐ¼ ÑˆÐ°Ð±Ð»Ð¾Ð½
+        ;Ð°ÐºÑ‚Ð¸Ð²Ð°Ñ†Ð¸Ñ ÑÐºÑ€Ñ‹Ñ‚Ð¾Ð³Ð¾ ÑÐ»Ð¾Ñ
+        (do [(j 0 (+ 1 j))] ((= j NumHidden))            
+          (setvvalue SumH j (getmvalue WeightIH 0 j))
+          (do [(i 0 (+ 1 i))] ((= i NumInput))
+            (setvvalue SumH j
+                       (+ (getvvalue SumH j)
+                          (* 
+                           (getmvalue Input p i)
+                           (getmvalue WeightIH (1+ i) j)
+                           )
+                          )
+                       )
+            )
+          (setvvalue Hidden j (/ 1.0 
+                                 (+ 
+                                  1.0 
+                                  (exp (- (getvvalue SumH j)))
+                                  )    
+                                 )
+                     )
+          )
+        ;Ð°ÐºÑ‚Ð¸Ð²Ð°Ñ†Ð¸Ñ Ð²Ñ‹Ñ…Ð¾Ð´Ð½Ð¾Ð³Ð¾ ÑÐ»Ð¾Ñ Ð¸ Ð²Ñ‹Ñ‡Ð¸ÑÐ»ÐµÐ½Ð¸Ðµ Ð¾ÑˆÐ¸Ð±ÐºÐ¸
+        (do [(k 0 (+ 1 k))] ((= k NumOutput))        
+          (setvvalue SumO k (getmvalue WeightHO 0 k))
+          (do [(j 0 (+ 1 j))] ((= j NumHidden))            
+            (setvvalue SumO k (+ 
+                               (getvvalue SumO k) 
+                               (* 
+                                (getvvalue Hidden j)
+                                (getmvalue WeightHO (1+ j) k)
+                                )
+                               )
+                       )
+            )
+          ;ÑÐ¸Ð³Ð¼Ð¾Ð¸Ð´Ð°Ð»ÑŒÐ½Ñ‹Ð¹ Ð²Ñ‹Ð²Ð¾Ð´
+          
+          (setvvalue Output k (/ 1.0 
+                                 (+ 
+                                  1.0 
+                                  (exp (- (getvvalue SumO k)))
+                                  )    
+                                 )
+                     )
+          (set! Error (+ 
+                       Error
+                       (*
+                        0.5 
+                        (- (getmvalue Target p k) (getvvalue Output k))
+                        (- (getmvalue Target p k) (getvvalue Output k))
+                        )
+                       )
+                )
+          (setvvalue DeltaO k 
+                     (*
+                      (- (getmvalue Target p k) (getvvalue Output k))
+                      (getvvalue Output k)
+                      (- 1.0 (getvvalue Output k))
+                      )
+                     )
+          )
+        ;Ð¾Ð±Ñ€Ð°Ñ‚Ð½Ð¾Ðµ Ñ€Ð°ÑÐ¿Ñ€Ð¾ÑÑ‚Ñ€Ð°Ð½ÐµÐ½Ð¸Ðµ Ð¾ÑˆÐ¸Ð±ÐºÐ¸ Ð½Ð° ÑÐºÑ€Ñ‹Ñ‚Ñ‹Ð¹ ÑÐ»Ð¾Ð¹
+        (do [(j 0 (+ 1 j))] ((= j NumHidden))            
+          (setvvalue SumDOW j 0.0)
+          (do [(k 0 (+ 1 k))] ((= k NumOutput))        
+            (setvvalue SumDOW j 
+                       (+
+                        (getvvalue SumDOW j)
+                        (*
+                         (getmvalue WeightHO (1+ j) k)
+                         (getvvalue DeltaO k)
+                         )
+                        )
+                       )
+            )
+          (setvvalue DeltaH j 
+                     (* 
+                      (getvvalue SumDOW j)
+                      (getvvalue Hidden j)
+                      (- 1.0 (getvvalue Hidden j))
+                      )
+                     )
+          )
+        (do [(j 0 (+ 1 j))] ((= j NumHidden))            
+          (setmvalue DeltaWeightIH 0 j 
+                     (+
+                      (* 
+                       eta 
+                       (getvvalue DeltaH j)
+                       )
+                      (*
+                       alpha 
+                       (getmvalue DeltaWeightIH 0 j)
+                       )
+                      )
+                     )
+          (setmvalue WeightIH 0 j 
+                     (+
+                      (getmvalue WeightIH 0 j)
+                      (getmvalue DeltaWeightIH 0 j)
+                      )
+                     )
+          (do [(i 0 (+ 1 i))] ((= i NumInput))
+            (setmvalue DeltaWeightIH (1+ i) j 
+                       (+
+                        (* 
+                         eta 
+                         (getmvalue Input p i)
+                         (getvvalue DeltaH j)
+                         )
+                        (*
+                         alpha 
+                         (getmvalue DeltaWeightIH (1+ i) j)
+                         )
+                        )
+                       )
+            (setmvalue WeightIH (1+ i) j 
+                       (+
+                        (getmvalue WeightIH (1+ i) j)
+                        (getmvalue DeltaWeightIH (1+ i) j)
+                        )
+                       )
+            )
+          )
+        (do [(k 0 (+ 1 k))] ((= k NumOutput))        
+          (setmvalue DeltaWeightHO 0 k
+                     (+
+                      (* 
+                       eta 
+                       (getvvalue DeltaO k)
+                       )
+                      (*
+                       alpha 
+                       (getmvalue DeltaWeightHO 0 k)
+                       )
+                      )
+                     )
+          (setmvalue WeightHO 0 k
+                     (+
+                      (getmvalue WeightHO 0 k)
+                      (getmvalue DeltaWeightHO 0 k)
+                      )
+                     )
+          (do [(j 0 (+ 1 j))] ((= j NumHidden))            
+            (setmvalue DeltaWeightHO (1+ j) k
+                       (+
+                        (* 
+                         eta 
+                         (getvvalue Hidden j)
+                         (getvvalue DeltaO k)
+                         )
+                        (*
+                         alpha 
+                         (getmvalue DeltaWeightHO (1+ j) k)
+                         )
+                        )
+                       )
+            (setmvalue WeightHO (1+ j) k
+                       (+
+                        (getmvalue WeightHO (1+ j) k)
+                        (getmvalue DeltaWeightHO (1+ j) k)
+                        )
+                       )
+            )
+          )
+        )
+      (when (and DoOut (= (remainder epoch 10) 0));Ð¾Ñ‚Ð»Ð°Ð´Ð¾Ñ‡Ð½Ñ‹Ð¹ Ð²Ñ‹Ð²Ð¾Ð´
+        (printf "epoch=~S, error=~S\n" epoch Error)
+        )
+      (when (< Error GlobalMinError)
+        (set! GlobalMinError Error)
+        (printf "epoch=~S, (min)error=~S\n" epoch Error)
+        (write-network NetworkFile)
+        )
+      )
+    )
   )
 
-;ïîäà÷à ñèãíàëà íà âõîä ñåòè è ïîëó÷åíèå ðåçóëüòàòà
-
-(define (getoutput BeInput
-
-                       )
-
-  (let (
-
-            [Input (make-vector NUMIN)]
-
-            [Output (make-vector NUMOUT)]
-
-            [result (make-vector NUMOUT)]
-
-            [SumH (make-vector NUMHID)]
-
-            [Hidden (make-vector NUMHID)]
-
-            [SumO (make-vector NUMOUT)]
-
-            [NumInput NUMIN]
-
-            [NumHidden NUMHID]
-
-            [NumOutput NUMOUT]
-
-            )
-
-   
-
-        ;íîðìàëèçàöèÿ âõîäà
-
-        (do [(k 0 (+ 1 k))] ((= k NumInput))            
-
-          (setvvalue Input k (/
-
-                              (- (getvvalue BeInput k) mini)
-
-                              (- maxi mini)
-
-                              )
-
-                     )
-
-          )
-
-   
-
-        ;àêòèâàöèÿ ñêðûòîãî ñëîÿ
-
-        (do [(j 0 (+ 1 j))] ((= j NumHidden))                
-
-          (setvvalue SumH j (getmvalue WeightIH 0 j))
-
-          (do [(i 0 (+ 1 i))] ((= i NumInput))
-
-            (setvvalue SumH j
-
-                       (+ (getvvalue SumH j)
-
-                          (*
-
-                           (getvvalue Input i)
-
-                           (getmvalue WeightIH (1+ i) j)
-
-                           )
-
+;Ð¿Ð¾Ð´Ð°Ñ‡Ð° ÑÐ¸Ð³Ð½Ð°Ð»Ð° Ð½Ð° Ð²Ñ…Ð¾Ð´ ÑÐµÑ‚Ð¸ Ð¸ Ð¿Ð¾Ð»ÑƒÑ‡ÐµÐ½Ð¸Ðµ Ñ€ÐµÐ·ÑƒÐ»ÑŒÑ‚Ð°Ñ‚Ð°
+(define (getoutput BeInput 
+                   )
+  (let ( 
+        [Input (make-vector NUMIN)]
+        [Output (make-vector NUMOUT)]
+        [result (make-vector NUMOUT)]
+        [SumH (make-vector NUMHID)]
+        [Hidden (make-vector NUMHID)]
+        [SumO (make-vector NUMOUT)]
+        [NumInput NUMIN]
+        [NumHidden NUMHID]
+        [NumOutput NUMOUT]
+        )
+    
+    ;Ð½Ð¾Ñ€Ð¼Ð°Ð»Ð¸Ð·Ð°Ñ†Ð¸Ñ Ð²Ñ…Ð¾Ð´Ð°
+    (do [(k 0 (+ 1 k))] ((= k NumInput))        
+      (setvvalue Input k (/
+                          (- (getvvalue BeInput k) mini)
+                          (- maxi mini)
                           )
-
+                 )
+      )
+    
+    ;Ð°ÐºÑ‚Ð¸Ð²Ð°Ñ†Ð¸Ñ ÑÐºÑ€Ñ‹Ñ‚Ð¾Ð³Ð¾ ÑÐ»Ð¾Ñ
+    (do [(j 0 (+ 1 j))] ((= j NumHidden))            
+      (setvvalue SumH j (getmvalue WeightIH 0 j))
+      (do [(i 0 (+ 1 i))] ((= i NumInput))
+        (setvvalue SumH j
+                   (+ (getvvalue SumH j)
+                      (* 
+                       (getvvalue Input i)
+                       (getmvalue WeightIH (1+ i) j)
                        )
+                      )
+                   )
+        )
+      (setvvalue Hidden j (/ 1.0 
+                             (+ 
+                              1.0 
+                              (exp (- (getvvalue SumH j)))
+                              )    
+                             )
+                 )
+      )
+    
+    ;Ð°ÐºÑ‚Ð¸Ð²Ð°Ñ†Ð¸Ñ Ð²Ñ‹Ñ…Ð¾Ð´Ð½Ð¾Ð³Ð¾ ÑÐ»Ð¾Ñ
+    (do [(k 0 (+ 1 k))] ((= k NumOutput))        
+      (setvvalue SumO k (getmvalue WeightHO 0 k))
+      (do [(j 0 (+ 1 j))] ((= j NumHidden))            
+        (setvvalue SumO k (+ 
+                           (getvvalue SumO k) 
+                           (* 
+                            (getvvalue Hidden j)
+                            (getmvalue WeightHO (1+ j) k)
+                            )
+                           )
+                   )
+        )
+      (setvvalue Output k (/ 1.0 
+                             (+ 
+                              1.0 
+                              (exp (- (getvvalue SumO k)))
+                              )    
+                             )
+                 )
+      )
+    
+    ;Ð´ÐµÐ½Ð¾Ñ€Ð¼Ð°Ð»Ð¸Ð·Ð°Ñ†Ð¸Ñ Ð²Ñ‹Ñ…Ð¾Ð´Ð°
+    (do [(k 0 (+ 1 k))] ((= k NumOutput) result)        
+      (setvvalue result k (+
+                           (*
+                            (getvvalue Output k)
+                            (- maxo mino)
+                            )
+                           mino
+                           )
+                 )
+      )
+    ))
 
-            )
+;Ð¿Ñ€Ð¸Ð¼ÐµÑ€ ÑÐ¾Ð·Ð´Ð°Ð½Ð¸Ñ Ð¸ÑÐ¿Ð¾Ð»ÑŒÐ·Ð¾Ð²Ð°Ð½Ð¸Ñ Ð½ÐµÐ¹Ñ€Ð¾Ð½Ð½Ð¾Ð¹ ÑÐµÑ‚Ð¸
 
-          (setvvalue Hidden j (/ 1.0
-
-                                 (+
-
-                                  1.0
-
-                                  (exp (- (getvvalue SumH j)))
-
-                                  )    
-
-                                 )
-
-                     )
-
-          )
-
-   
-
-        ;àêòèâàöèÿ âûõîäíîãî ñëîÿ
-
-        (do [(k 0 (+ 1 k))] ((= k NumOutput))            
-
-          (setvvalue SumO k (getmvalue WeightHO 0 k))
-
-          (do [(j 0 (+ 1 j))] ((= j NumHidden))                
-
-            (setvvalue SumO k (+
-
-                               (getvvalue SumO k)
-
-                               (*
-
-                                (getvvalue Hidden j)
-
-                                (getmvalue WeightHO (1+ j) k)
-
-                                )
-
-                               )
-
-                       )
-
-            )
-
-          (setvvalue Output k (/ 1.0
-
-                                 (+
-
-                                  1.0
-
-                                  (exp (- (getvvalue SumO k)))
-
-                                  )    
-
-                                 )
-
-                     )
-
-          )
-
-   
-
-        ;äåíîðìàëèçàöèÿ âûõîäà
-
-        (do [(k 0 (+ 1 k))] ((= k NumOutput) result)            
-
-          (setvvalue result k (+
-
-                               (*
-
-                                (getvvalue Output k)
-
-                                (- maxo mino)
-
-                                )
-
-                               mino
-
-                               )
-
-                     )
-
-          )
-
-        ))
-
-;ïðèìåð ñîçäàíèÿ èñïîëüçîâàíèÿ íåéðîííîé ñåòè
-
-(define NUMPAT 60) ;÷èñëî îáó÷àþùèõ øàáëîíîâ - ìîæåò ïåðåîïðåäåëÿòüñÿ â ôàéëå
-
-;(set! NUMIN  4)  ;ðàçìåðíîñòü âõîäà - ìîæåò ïåðåîïðåäåëÿòüñÿ â ôàéëå
-
-;(set! NUMOUT 1)  ;ðàçìåðíîñòü âûõîäà - ìîæåò ïåðåîïðåäåëÿòüñÿ â ôàéëå
+(define NUMPAT 60) ;Ñ‡Ð¸ÑÐ»Ð¾ Ð¾Ð±ÑƒÑ‡Ð°ÑŽÑ‰Ð¸Ñ… ÑˆÐ°Ð±Ð»Ð¾Ð½Ð¾Ð² - Ð¼Ð¾Ð¶ÐµÑ‚ Ð¿ÐµÑ€ÐµÐ¾Ð¿Ñ€ÐµÐ´ÐµÐ»ÑÑ‚ÑŒÑÑ Ð² Ñ„Ð°Ð¹Ð»Ðµ
+;(set! NUMIN  4)  ;Ñ€Ð°Ð·Ð¼ÐµÑ€Ð½Ð¾ÑÑ‚ÑŒ Ð²Ñ…Ð¾Ð´Ð° - Ð¼Ð¾Ð¶ÐµÑ‚ Ð¿ÐµÑ€ÐµÐ¾Ð¿Ñ€ÐµÐ´ÐµÐ»ÑÑ‚ÑŒÑÑ Ð² Ñ„Ð°Ð¹Ð»Ðµ
+;(set! NUMOUT 1)  ;Ñ€Ð°Ð·Ð¼ÐµÑ€Ð½Ð¾ÑÑ‚ÑŒ Ð²Ñ‹Ñ…Ð¾Ð´Ð° - Ð¼Ð¾Ð¶ÐµÑ‚ Ð¿ÐµÑ€ÐµÐ¾Ð¿Ñ€ÐµÐ´ÐµÐ»ÑÑ‚ÑŒÑÑ Ð² Ñ„Ð°Ð¹Ð»Ðµ
 
 (define (main)
-
- 
-
-  ;ôîðìàòû ôàéëîâ ìàòðèö: ÷èñëî_ñòðîê ÷èñëî_ñòîëáöîâ äàííûå
-
+  
+  ;Ñ„Ð¾Ñ€Ð¼Ð°Ñ‚Ñ‹ Ñ„Ð°Ð¹Ð»Ð¾Ð² Ð¼Ð°Ñ‚Ñ€Ð¸Ñ†: Ñ‡Ð¸ÑÐ»Ð¾_ÑÑ‚Ñ€Ð¾Ðº Ñ‡Ð¸ÑÐ»Ð¾_ÑÑ‚Ð¾Ð»Ð±Ñ†Ð¾Ð² Ð´Ð°Ð½Ð½Ñ‹Ðµ
   (define f (open-input-file "etalons.txt" #:mode 'text))
-
- 
-
+  
   (set! NUMPAT (read f))
-
   (set! NUMIN (read f))
-
   (set! NUMOUT (read f))
 
-  (set! NUMHID (+ (* NUMIN 2) 1)) ;÷èñëî íåéðîíîâ â ñêðûòîì ñëîå
-
+  (set! NUMHID (+ (* NUMIN 2) 1)) ;Ñ‡Ð¸ÑÐ»Ð¾ Ð½ÐµÐ¹Ñ€Ð¾Ð½Ð¾Ð² Ð² ÑÐºÑ€Ñ‹Ñ‚Ð¾Ð¼ ÑÐ»Ð¾Ðµ
   ;(set! NUMHID 2)
 
   (define Input (make-matrix NUMPAT NUMIN))
-
   (define Output (make-matrix NUMPAT NUMOUT))
-
- 
-
+  
   (do [(i 0 (+ 1 i))] ((= i NUMPAT))
-
-        (do [(k 0 (+ 1 k))] ((= k NUMIN))            
-
-          (setmvalue Input i k (read f))
-
-          )
-
-        (do [(k 0 (+ 1 k))] ((= k NUMOUT))            
-
-          (setmvalue Output i k (read f))
-
-          )
-
-        )
-
- 
-
+    (do [(k 0 (+ 1 k))] ((= k NUMIN))        
+      (setmvalue Input i k (read f))
+      )
+    (do [(k 0 (+ 1 k))] ((= k NUMOUT))        
+      (setmvalue Output i k (read f))
+      )
+    )
+  
   (close-input-port f)
 
   (make-network NUMIN NUMOUT NUMHID)
 
   (define in (make-vector NUMIN))
-
   (define res (make-vector NUMOUT))
-
   (define out (make-vector NUMOUT))
-
- 
-
+  
   (printf
-
-   "Ðàçìåðíîñòü âõîäà - ~S, ðàçìåðíîñòü âûõîäà - ~S, ÷èñëî øàáëîíîâ - ~S\n"
-
+   "Ð Ð°Ð·Ð¼ÐµÑ€Ð½Ð¾ÑÑ‚ÑŒ Ð²Ñ…Ð¾Ð´Ð° - ~S, Ñ€Ð°Ð·Ð¼ÐµÑ€Ð½Ð¾ÑÑ‚ÑŒ Ð²Ñ‹Ñ…Ð¾Ð´Ð° - ~S, Ñ‡Ð¸ÑÐ»Ð¾ ÑˆÐ°Ð±Ð»Ð¾Ð½Ð¾Ð² - ~S\n"
    NUMIN NUMOUT NUMPAT
-
    )
-
- 
-
+  
   (train Input Output 0.00001 150000 #t "network.txt")
-
   ;(read-network "network.txt")
-
- 
-
-  (printf "Èñõîäíûå äàííûå:\n")
-
+  
+  (printf "Ð˜ÑÑ…Ð¾Ð´Ð½Ñ‹Ðµ Ð´Ð°Ð½Ð½Ñ‹Ðµ:\n")
   (do [(i 0 (+ 1 i)) (res null)] ((= i NUMPAT))
-
-        (printf "Âõîä: ")
-
-        (print-vector (vector-from-matrix Input i))
-
-        (set! res (getoutput (vector-from-matrix Input i)))
-
-        (printf " Ýòàëîííûé âûõîä: ")
-
-        (print-vector (vector-from-matrix Output i))
-
-        (printf " Ïîëó÷åííûé âûõîä: ")
-
-        (print-vector res)
-
-        (when (zero? (remainder i 10))
-
-          (printf "Press Enter to continue")
-
-          (read-char)
-
-          )
-
-        )
-
- 
-
-  (printf "Òåñòîâûå äàííûå:\n")
-
+    (printf "Ð’Ñ…Ð¾Ð´: ")
+    (print-vector (vector-from-matrix Input i))
+    (set! res (getoutput (vector-from-matrix Input i)))
+    (printf " Ð­Ñ‚Ð°Ð»Ð¾Ð½Ð½Ñ‹Ð¹ Ð²Ñ‹Ñ…Ð¾Ð´: ")
+    (print-vector (vector-from-matrix Output i))
+    (printf " ÐŸÐ¾Ð»ÑƒÑ‡ÐµÐ½Ð½Ñ‹Ð¹ Ð²Ñ‹Ñ…Ð¾Ð´: ")
+    (print-vector res)
+    (when (zero? (remainder i 10))
+      (printf "Press Enter to continue")
+      (read-char)
+      )
+    )
+  
+  (printf "Ð¢ÐµÑÑ‚Ð¾Ð²Ñ‹Ðµ Ð´Ð°Ð½Ð½Ñ‹Ðµ:\n")
   (set! f (open-input-file "test.txt" #:mode 'text))
 
   (define count (read f))
-
   (set! NUMIN (read f))
-
   (do [(i 0 (+ 1 i)) (res null)] ((= i count))
-
-        (do [(k 0 (+ 1 k))] ((= k NUMIN))            
-
-          (setvvalue in k (read f))
-
-          )
-
-        (printf "Âõîä: ")
-
-        (print-vector in)
-
-        (set! res (getoutput in))
-
-        (printf " Ïîëó÷åííûé âûõîä: ")
-
-        (print-vector res)
-
-        (when (zero? (remainder i 10))
-
-          (printf "Press Enter to continue")
-
-          (read-char)
-
-          )
-
-        )
-
+    (do [(k 0 (+ 1 k))] ((= k NUMIN))        
+      (setvvalue in k (read f))
+      )
+    (printf "Ð’Ñ…Ð¾Ð´: ")
+    (print-vector in)
+    (set! res (getoutput in))
+    (printf " ÐŸÐ¾Ð»ÑƒÑ‡ÐµÐ½Ð½Ñ‹Ð¹ Ð²Ñ‹Ñ…Ð¾Ð´: ")
+    (print-vector res)
+    (when (zero? (remainder i 10))
+      (printf "Press Enter to continue")
+      (read-char)
+      )
+    )
   (close-input-port f)
-
   )
 
-;ñ ïîìîùüþ ýòèõ ôóíêöèé ìîæíî ñîõðàíÿòü è
 
-;çàãðóæàòü ìàòðèöû âåñîâûõ êîýôôèöèåíòîâ
-
+;Ñ Ð¿Ð¾Ð¼Ð¾Ñ‰ÑŒÑŽ ÑÑ‚Ð¸Ñ… Ñ„ÑƒÐ½ÐºÑ†Ð¸Ð¹ Ð¼Ð¾Ð¶Ð½Ð¾ ÑÐ¾Ñ…Ñ€Ð°Ð½ÑÑ‚ÑŒ Ð¸ 
+;Ð·Ð°Ð³Ñ€ÑƒÐ¶Ð°Ñ‚ÑŒ Ð¼Ð°Ñ‚Ñ€Ð¸Ñ†Ñ‹ Ð²ÐµÑÐ¾Ð²Ñ‹Ñ… ÐºÐ¾ÑÑ„Ñ„Ð¸Ñ†Ð¸ÐµÐ½Ñ‚Ð¾Ð²
 ;=====================================
-
 ;
 
 (define (read-network filename)
-
   (define f (open-input-file filename  #:mode 'text))
-
   (set! NUMIN (read f))
-
   (set! NUMOUT (read f))
-
   (set! NUMHID (read f))
 
   (make-network NUMIN NUMOUT NUMHID)
 
   (do [(i 0 (+ 1 i))] ((= i (+ 1 NUMIN)))
-
-        (do [(k 0 (+ 1 k))] ((= k NUMHID))            
-
-          (setmvalue WeightIH i k (read f))
-
-          )
-
-        )
+    (do [(k 0 (+ 1 k))] ((= k NUMHID))        
+      (setmvalue WeightIH i k (read f))
+      )
+    )
 
   (do [(i 0 (+ 1 i))] ((= i (+ 1 NUMHID)))
-
-        (do [(k 0 (+ 1 k))] ((= k NUMOUT))            
-
-          (setmvalue WeightHO i k (read f))
-
-          )
-
-        )
-
+    (do [(k 0 (+ 1 k))] ((= k NUMOUT))        
+      (setmvalue WeightHO i k (read f))
+      )
+    )
   (set! mini (read f))
-
   (set! maxi (read f))
-
   (set! mino (read f))
-
   (set! maxo (read f))
-
   (set! GlobalMinError (read f))
-
- 
-
+  
   (close-input-port f)
-
   )
 
 (define (write-network filename)
-
   (define f (open-output-file filename  #:mode 'text #:exists 'replace))
 
   (fprintf f "~S ~S ~S\n" NUMIN NUMOUT NUMHID)
 
   (do [(i 0 (+ 1 i))] ((= i (+ 1 NUMIN)))
-
-        (do [(k 0 (+ 1 k))] ((= k NUMHID) (fprintf f "\n"))            
-
-          (fprintf f "~S " (getmvalue WeightIH i k))
-
-          )
-
-        )
+    (do [(k 0 (+ 1 k))] ((= k NUMHID) (fprintf f "\n"))        
+      (fprintf f "~S " (getmvalue WeightIH i k))
+      )
+    )
 
   (do [(i 0 (+ 1 i))] ((= i (+ 1 NUMHID)))
-
-        (do [(k 0 (+ 1 k))] ((= k NUMOUT) (fprintf f "\n"))            
-
-          (fprintf f "~S " (getmvalue WeightHO i k))
-
-          )
-
-        )
+    (do [(k 0 (+ 1 k))] ((= k NUMOUT) (fprintf f "\n"))        
+      (fprintf f "~S " (getmvalue WeightHO i k))
+      )
+    )
 
   (fprintf f " ~S ~S " mini maxi)
-
   (fprintf f " ~S ~S " mino maxo)
-
   (fprintf f " ~S" GlobalMinError)
-
- 
-
+  
   (close-output-port f)
-
   )
 
 (main)
