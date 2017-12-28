@@ -107,6 +107,61 @@ in
   )
 end
 
+(*с помощью этих функций можно сохранять и 
+  загружать матрицы весовых коэффициентов*)
+
+fun readnetwork(filename)=
+  (define f (open-input-file filename  #:mode 'text))
+  (set! NUMIN (read f))
+  (set! NUMOUT (read f))
+  (set! NUMHID (read f))
+
+  (make-network NUMIN NUMOUT NUMHID)
+
+  (do [(i 0 (+ 1 i))] ((= i (+ 1 NUMIN)))
+    (do [(k 0 (+ 1 k))] ((= k NUMHID))        
+      (setmvalue WeightIH i k (read f))
+      )
+    )
+
+  (do [(i 0 (+ 1 i))] ((= i (+ 1 NUMHID)))
+    (do [(k 0 (+ 1 k))] ((= k NUMOUT))        
+      (setmvalue WeightHO i k (read f))
+      )
+    )
+  (set! mini (read f))
+  (set! maxi (read f))
+  (set! mino (read f))
+  (set! maxo (read f))
+  (set! GlobalMinError (read f))
+  
+  (close-input-port f)
+  )
+
+fun writenetwork(filename)=
+  (define f (open-output-file filename  #:mode 'text #:exists 'replace))
+
+  (fprintf f "~S ~S ~S\n" NUMIN NUMOUT NUMHID)
+
+  (do [(i 0 (+ 1 i))] ((= i (+ 1 NUMIN)))
+    (do [(k 0 (+ 1 k))] ((= k NUMHID) (fprintf f "\n"))        
+      (fprintf f "~S " (getmvalue WeightIH i k))
+      )
+    )
+
+  (do [(i 0 (+ 1 i))] ((= i (+ 1 NUMHID)))
+    (do [(k 0 (+ 1 k))] ((= k NUMOUT) (fprintf f "\n"))        
+      (fprintf f "~S " (getmvalue WeightHO i k))
+      )
+    )
+
+  (fprintf f " ~S ~S " mini maxi)
+  (fprintf f " ~S ~S " mino maxo)
+  (fprintf f " ~S" GlobalMinError)
+  
+  (close-output-port f)
+  )
+
 
 (*обучение нейронной сети*)
 fun train(TrainInput,TrainTarget,Err,MaxCount,DoOut,NetworkFile)=
@@ -163,52 +218,70 @@ in
     i := !i + 1
   );
     (*если существует файл NetworkFile - загрузим его для дообучения*)
-(*
-    (cond
-      [(file-exists? NetworkFile) (read-network NetworkFile)]
-      [#t
-       (set! mini (getmvalue Input 0 0))
-       (set! maxi (getmvalue Input 0 0))
-       (set! mino (getmvalue Target 0 0))
-       (set! maxo (getmvalue Target 0 0))
-    
-       ;поиск граничных значений в числовых массивах
-       (do [(i 0 (+ 1 i))] ((= i NumPattern))
-         (do [(k 0 (+ 1 k))] ((= k NumInput))        
-           (when (> mini (getmvalue Input i k)) 
-             (set! mini (getmvalue Input i k))
-             )
-           (when (< maxi (getmvalue Input i k)) 
-             (set! maxi (getmvalue Input i k))
-             )
-           )
-         (do [(k 0 (+ 1 k))] ((= k NumOutput))        
-           (when (> mino (getmvalue Target i k)) 
-             (set! mino (getmvalue Target i k))
-             )
-           (when (< maxo (getmvalue Target i k)) 
-             (set! maxo (getmvalue Target i k))
-             )
-           )
-         )
-       ]
-      )
-    
-    ;нормализация
-    (do [(i 0 (+ 1 i))] ((= i NumPattern))
-      (do [(k 0 (+ 1 k))] ((= k NumInput))        
-        (setmvalue Input i k 
-                   (/ (- (getmvalue Input i k) mini) (- maxi mini))
-                   )
-        )
-      (do [(k 0 (+ 1 k))] ((= k NumOutput))        
-        (setmvalue Target i k 
-                   (/ (- (getmvalue Target i k) mino) (- maxo mino))
-                   )
-        )
-      )
 
+    if FileSys.access(NetworkFile,[]) then 
+      readnetwork(NetworkFile)
+    else
+    (
+       mini := getmvalue(Input,0,0);
+       maxi := getmvalue(Input,0,0);
+       mino := getmvalue(Target,0,0);
+       maxo := getmvalue(Target,0,0);
     
+       (*поиск граничных значений в числовых массивах*)
+       i := 0;
+       while !i < NumPattern do
+       (
+         k := 0;
+         while !k < NumInput do
+         (
+           if !mini > getmvalue(Input,!i,!k) then
+             mini := getmvalue(Input,!i,!k)
+           else
+             ();
+           if !maxi < getmvalue(Input,!i,!k) then
+             maxi := getmvalue(Input,!i,!k)
+           else
+             ();
+           k := !k + 1
+         );
+         k := 0;
+         while !k < NumOutput do
+         (
+           if !mino > getmvalue(Target,!i,!k) then
+             mino := getmvalue(Target,!i,!k)
+           else
+             ();
+           if !maxo < getmvalue(Target,!i,!k) then
+             maxo := getmvalue(Target,!i,!k)
+           else
+             ();
+           k := !k + 1
+         );
+         i := !i + 1
+       )
+    );
+    
+    (*нормализация*)
+    i := 0;
+    while !i < NumPattern do
+    (
+      k := 0;
+      while !k < NumInput do
+      (
+        setmvalue(Input,!i,!k, (getmvalue(Input,!i,!k) - !mini) / (!maxi - !mini) );
+        k := !k + 1
+      );
+      k := 0;
+      while !k < NumOutput do
+      (
+        setmvalue(Target,!i,!k, (getmvalue(Target,!i,!k) - !mino) / (!maxo - !mino));
+        k := !k + 1
+      );
+      i := !i + 1
+    )
+
+      (*
     ;цикл обучения по достижению заданной ошибки или числа итераций
     (do [(epoch 0 (+ 1 epoch)) ] ( (or (= epoch MaxCount) (< Error Err)) (write-network NetworkFile) Error)        
       ;перемешиваем шаблоны
@@ -567,62 +640,6 @@ end
   )
 
 
-;с помощью этих функций можно сохранять и 
-;загружать матрицы весовых коэффициентов
-;=====================================
-;
-
-(define (read-network filename)
-  (define f (open-input-file filename  #:mode 'text))
-  (set! NUMIN (read f))
-  (set! NUMOUT (read f))
-  (set! NUMHID (read f))
-
-  (make-network NUMIN NUMOUT NUMHID)
-
-  (do [(i 0 (+ 1 i))] ((= i (+ 1 NUMIN)))
-    (do [(k 0 (+ 1 k))] ((= k NUMHID))        
-      (setmvalue WeightIH i k (read f))
-      )
-    )
-
-  (do [(i 0 (+ 1 i))] ((= i (+ 1 NUMHID)))
-    (do [(k 0 (+ 1 k))] ((= k NUMOUT))        
-      (setmvalue WeightHO i k (read f))
-      )
-    )
-  (set! mini (read f))
-  (set! maxi (read f))
-  (set! mino (read f))
-  (set! maxo (read f))
-  (set! GlobalMinError (read f))
-  
-  (close-input-port f)
-  )
-
-(define (write-network filename)
-  (define f (open-output-file filename  #:mode 'text #:exists 'replace))
-
-  (fprintf f "~S ~S ~S\n" NUMIN NUMOUT NUMHID)
-
-  (do [(i 0 (+ 1 i))] ((= i (+ 1 NUMIN)))
-    (do [(k 0 (+ 1 k))] ((= k NUMHID) (fprintf f "\n"))        
-      (fprintf f "~S " (getmvalue WeightIH i k))
-      )
-    )
-
-  (do [(i 0 (+ 1 i))] ((= i (+ 1 NUMHID)))
-    (do [(k 0 (+ 1 k))] ((= k NUMOUT) (fprintf f "\n"))        
-      (fprintf f "~S " (getmvalue WeightHO i k))
-      )
-    )
-
-  (fprintf f " ~S ~S " mini maxi)
-  (fprintf f " ~S ~S " mino maxo)
-  (fprintf f " ~S" GlobalMinError)
-  
-  (close-output-port f)
-  )
 
 val _=main()
 *)
