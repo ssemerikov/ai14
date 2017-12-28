@@ -2,7 +2,7 @@
 
 val NUMIN=ref 0   (*размерность входа*)
 and NUMHID=ref 0  (*размерность скрытого слоя*)
-and NUMOUT=ref 0 (*размерность выхода*)
+and NUMOUT=ref 0  (*размерность выхода*)
 
 (*матрицы весовых коэффициентов*)
 and WeightIH=ref (Array2.array(0,0,0.0)) (*соединения входа и скрытого слоя*)
@@ -34,10 +34,6 @@ fun makematrix(m,n,value)=
   else
       raise SizeError "Недозволенная размерность матрицы"
 
-
-fun vectorfrommatrix(m,index)=
-  Array2.row(m,index)
-
 (*функции для получения/установки значений векторов и матриц*)
 
 fun getvvalue(obj, i)=
@@ -52,7 +48,20 @@ fun setvvalue(vec,i,value)=
 fun setmvalue(matrix,i,j,value)=
   Array2.update(matrix,i,j,value)
 
-fun printvector(v:real array):unit=
+fun vectorfrommatrix(m,index)=
+let 
+  val res=makevector(Array2.nCols(m),0.0)
+  and i=ref 0
+in
+  while !i < Array2.nCols(m) do
+  (
+    setvvalue(res,!i,getmvalue(m, index, !i));
+    i := !i + 1
+  );
+  res
+end
+
+fun printvector(v)=
   let
     val i=ref 0
   in
@@ -110,10 +119,10 @@ end
 (*с помощью этих функций можно сохранять и 
   загружать матрицы весовых коэффициентов*)
 
-fun int_from_stream stream =
+fun read_int stream =
   Option.valOf (TextIO.scanStream (Int.scan StringCvt.DEC) stream)
 
-fun real_from_stream stream =
+fun read_real stream =
   Option.valOf (TextIO.scanStream (Real.scan) stream)
 
 fun readnetwork(filename)=
@@ -122,9 +131,9 @@ let
   and i=ref 0
   and k=ref 0
 in
-  NUMIN := int_from_stream f;
-  NUMOUT := int_from_stream f;
-  NUMHID := int_from_stream f;
+  NUMIN := read_int f;
+  NUMOUT := read_int f;
+  NUMHID := read_int f;
   makenetwork(!NUMIN,!NUMOUT,!NUMHID);
   i := 0;
   while !i < !NUMIN+1 do
@@ -132,7 +141,7 @@ in
     k := 0;
     while !k < !NUMHID do
     (
-      setmvalue(!WeightIH,!i,!k, real_from_stream f);
+      setmvalue(!WeightIH,!i,!k, read_real f);
       k := !k + 1
     );
     i := !i + 1
@@ -143,16 +152,16 @@ in
     k := 0;
     while !k < !NUMOUT do
     (
-      setmvalue(!WeightHO,!i,!k, real_from_stream f);
+      setmvalue(!WeightHO,!i,!k, read_real f);
       k := !k + 1
     );
     i := !i + 1
   );
-  mini := real_from_stream f;
-  maxi := real_from_stream f;
-  mino := real_from_stream f;
-  maxo := real_from_stream f;
-  GlobalMinError := real_from_stream f;
+  mini := read_real f;
+  maxi := read_real f;
+  mino := read_real f;
+  maxo := read_real f;
+  GlobalMinError := read_real f;
   TextIO.closeIn(f)
 end
 
@@ -506,96 +515,119 @@ in
     (
       setvvalue(result,!k, getvvalue(Output,!k)*(!maxo - !mino)+ !mino);
       k := !k +1
-    )
+    );
+    result
 end
-
-
-(*
 
 (*пример создания использования нейронной сети*)
 
-(define NUMPAT 60) ;число обучающих шаблонов - может переопределяться в файле
-;(set! NUMIN  4)  ;размерность входа - может переопределяться в файле
-;(set! NUMOUT 1)  ;размерность выхода - может переопределяться в файле
-
-(define (main)
+fun main()=
+let 
+  val NUMPAT=ref 60 (*число обучающих шаблонов - может переопределяться в файле*)
+  and f=TextIO.openIn("etalons.txt")
+in 
+  (*форматы файлов матриц: число_строк число_столбцов данные*)
+  NUMPAT := read_int f;
+  NUMIN := read_int f;
+  NUMOUT := read_int f;
   
-  ;форматы файлов матриц: число_строк число_столбцов данные
-  (define f (open-input-file "etalons.txt" #:mode 'text))
-  
-  (set! NUMPAT (read f))
-  (set! NUMIN (read f))
-  (set! NUMOUT (read f))
+  NUMHID := !NUMIN * 2 + 1; (*число нейронов в скрытом слое*)
 
-  (set! NUMHID (+ ( * NUMIN 2) 1)) ;число нейронов в скрытом слое
-  ;(set! NUMHID 2)
-
-  (define Input (make-matrix NUMPAT NUMIN))
-  (define Output (make-matrix NUMPAT NUMOUT))
+  let 
+    val Input=makematrix(!NUMPAT,!NUMIN,0.0)
+    and Output=makematrix(!NUMPAT,!NUMOUT,0.0)
+    and i=ref 0
+    and k=ref 0
+    and inp=makevector(!NUMIN,0.0)
+    and res=ref (makevector(!NUMOUT,0.0))
+    and out=makevector(!NUMOUT,0.0)
+  in
+  i :=0;
+  while !i < !NUMPAT do
+  (
+    k := 0;
+    while !k < !NUMIN do
+    (
+      setmvalue(Input,!i, !k, read_real f);
+      k := !k + 1
+    );
+    k := 0;
+    while !k < !NUMOUT do
+    (
+      setmvalue(Output,!i, !k, read_real f);
+      k := !k + 1
+    );
+    i := !i + 1
+  );
   
-  (do [(i 0 (+ 1 i))] ((= i NUMPAT))
-    (do [(k 0 (+ 1 k))] ((= k NUMIN))        
-      (setmvalue Input i k (read f))
-      )
-    (do [(k 0 (+ 1 k))] ((= k NUMOUT))        
-      (setmvalue Output i k (read f))
-      )
+  TextIO.closeIn(f);
+
+  makenetwork(!NUMIN,!NUMOUT,!NUMHID);
+  print("Размерность входа - " ^ Int.toString(!NUMIN) ^ ", размерность выхода - " ^  Int.toString(!NUMOUT) ^ 
+        ", число шаблонов - " ^ Int.toString(!NUMPAT)^ "\n");
+  train(Input,Output,0.00001,150000, true, "network.txt");
+  (* readnetwork("network.txt"); *)
+  
+  print "Исходные данные:\n";
+  i := 0;
+  while !i < !NUMPAT do
+  (
+    print "Вход: ";
+    printvector (vectorfrommatrix(Input,!i));
+    res := getoutput(vectorfrommatrix(Input, !i));
+    print " Эталонный выход: ";
+    printvector (vectorfrommatrix(Output, !i));
+    print " Полученный выход: ";
+    printvector(!res);
+    if Int.rem(!i,10)=0 then
+    (
+     print "Press Enter to continue";
+     TextIO.input1(TextIO.stdIn);
+     ()
     )
-  
-  (close-input-port f)
-
-  (make-network NUMIN NUMOUT NUMHID)
-
-  (define in (make-vector NUMIN))
-  (define res (make-vector NUMOUT))
-  (define out (make-vector NUMOUT))
-  
-  (printf
-   "Размерность входа - ~S, размерность выхода - ~S, число шаблонов - ~S\n"
-   NUMIN NUMOUT NUMPAT
-   )
-  
-  (train Input Output 0.00001 150000 #t "network.txt")
-  ;(read-network "network.txt")
-  
-  (printf "Исходные данные:\n")
-  (do [(i 0 (+ 1 i)) (res null)] ((= i NUMPAT))
-    (printf "Вход: ")
-    (print-vector (vector-from-matrix Input i))
-    (set! res (getoutput (vector-from-matrix Input i)))
-    (printf " Эталонный выход: ")
-    (print-vector (vector-from-matrix Output i))
-    (printf " Полученный выход: ")
-    (print-vector res)
-    (when (zero? (remainder i 10))
-      (printf "Press Enter to continue")
-      (read-char)
-      )
-    )
-  
-  (printf "Тестовые данные:\n")
-  (set! f (open-input-file "test.txt" #:mode 'text))
-
-  (define count (read f))
-  (set! NUMIN (read f))
-  (do [(i 0 (+ 1 i)) (res null)] ((= i count))
-    (do [(k 0 (+ 1 k))] ((= k NUMIN))        
-      (setvvalue in k (read f))
-      )
-    (printf "Вход: ")
-    (print-vector in)
-    (set! res (getoutput in))
-    (printf " Полученный выход: ")
-    (print-vector res)
-    (when (zero? (remainder i 10))
-      (printf "Press Enter to continue")
-      (read-char)
-      )
-    )
-  (close-input-port f)
+    else
+    ();
+    i := !i + 1
   )
+  end;
+  print "Тестовые данные:\n";
+  let
+    val f=TextIO.openIn("test.txt")
+    and count=ref 0
+    and i=ref 0
+    and k=ref 0
+    and inp=makevector(!NUMIN,0.0)
+    and res=ref (makevector(!NUMOUT,0.0))
+  in
+    count := read_int f;
+    NUMIN := read_int f;
 
-
+    i := 0;
+    while !i < !count do
+    (
+      k := 0;
+      while !k < !NUMIN do
+      (
+        setvvalue(inp, !k, read_real f);
+        k := !k + 1
+      );
+      print "Вход: ";
+      printvector inp;
+      res := getoutput(inp);
+      print " Полученный выход: ";
+      printvector(!res);
+      if Int.rem(!i,10)=0 then
+      (
+       print "Press Enter to continue";
+       TextIO.input1(TextIO.stdIn);
+       ()
+      )
+      else
+      ();
+      i := !i + 1
+    );
+    TextIO.closeIn(f)
+  end
+end
 
 val _=main()
-*)
