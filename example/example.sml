@@ -22,15 +22,15 @@ fun random()=
 
 (*функции для создания векторов и матриц*)
 
-fun makevector(size)=
+fun makevector(size, value)=
   if size>0 then
-      Array.array(size,0.0)
+      Array.array(size,value)
   else
       raise SizeError "Недозволенная размерность вектора"
 
-fun makematrix(m,n)=
+fun makematrix(m,n,value)=
   if m>0 andalso n>0 then
-      Array2.array(m, n, 0.0)
+      Array2.array(m, n, value)
   else
       raise SizeError "Недозволенная размерность матрицы"
 
@@ -77,8 +77,8 @@ in
   NUMOUT := NUMOUT0;
   NUMHID := NUMHID0;
   
-  WeightIH := makematrix(1 + !NUMIN, !NUMHID);
-  WeightHO := makematrix(1 + !NUMHID, !NUMOUT);
+  WeightIH := makematrix(1 + !NUMIN, !NUMHID, 0.0);
+  WeightHO := makematrix(1 + !NUMHID, !NUMOUT, 0.0);
 
   (*устанавливаем случайные весовые коэффициенты*)
   j := 0;
@@ -213,28 +213,29 @@ let
   val NUMPAT=Array2.nRows(TrainInput) (*число обучающих шаблонов*)
 in
 let
-  val Error=Err+1.0
+  val Error=ref (Err+1.0)
   and eta=0.5
   and alpha=0.9
-  and ranpat=makevector(NUMPAT)
+  and ranpat=makevector(NUMPAT,0)
   and NumPattern=NUMPAT
   and NumInput=(!NUMIN)
   and NumHidden=(!NUMHID)
   and NumOutput=(!NUMOUT)
          (*временные массивы*)
-  and DeltaWeightIH=makematrix(1+ !NUMIN,!NUMHID)
-  and DeltaWeightHO=makematrix(1+ !NUMHID,!NUMOUT)
-  and SumDOW=makevector(!NUMHID)
-  and DeltaH=makevector(!NUMHID)
-  and DeltaO=makevector(!NUMOUT)
-  and SumH=makevector(!NUMHID)
-  and Hidden=makevector(!NUMHID)
-  and SumO=makevector(!NUMOUT)
-  and Output=makevector(!NUMOUT)
-  and Input=makematrix(NUMPAT,!NUMIN)
-  and Target=makematrix(NUMPAT,!NUMOUT)
+  and DeltaWeightIH=makematrix(1+ !NUMIN,!NUMHID, 0.0)
+  and DeltaWeightHO=makematrix(1+ !NUMHID,!NUMOUT, 0.0)
+  and SumDOW=makevector(!NUMHID,0.0)
+  and DeltaH=makevector(!NUMHID,0.0)
+  and DeltaO=makevector(!NUMOUT,0.0)
+  and SumH=makevector(!NUMHID,0.0)
+  and Hidden=makevector(!NUMHID,0.0)
+  and SumO=makevector(!NUMOUT,0.0)
+  and Output=makevector(!NUMOUT,0.0)
+  and Input=makematrix(NUMPAT,!NUMIN, 0.0)
+  and Target=makematrix(NUMPAT,!NUMOUT, 0.0)
   and i=ref 0
   and k=ref 0
+  and epoch=ref 0
 in
     
     (*копируем тренировочные матрицы во временные во избежание порчи*)
@@ -325,19 +326,29 @@ in
       i := !i + 1
     );              
 
-      (*
-    ;цикл обучения по достижению заданной ошибки или числа итераций
-    (do [(epoch 0 (+ 1 epoch)) ] ( (or (= epoch MaxCount) (< Error Err)) (write-network NetworkFile) Error)        
-      ;перемешиваем шаблоны
-      (do [(p 0 (+ 1 p))] ((= p NumPattern))
-        (setvvalue ranpat p (random NumPattern))
-        )
-      (set! Error 0.0)
-      
-      ;цикл обучения по шаблонам
-      (do [(np 0 (+ 1 np)) (p (getvvalue ranpat 0) (getvvalue ranpat np))] ((= np NumPattern))            
-        ;выбираем шаблон
-        ;активация скрытого слоя
+    (*цикл обучения по достижению заданной ошибки или числа итераций*)
+    epoch := 0;
+    while !epoch < MaxCount andalso !Error<Err do
+    let
+      val p=ref 0
+      and gen=Random.newgen()
+      and np=ref 0
+    in
+      (*перемешиваем шаблоны*)
+      while !p<NumPattern do
+      (
+        setvvalue(ranpat,!p,Random.range(0,NumPattern) gen); 
+        p := !p + 1
+      );
+      Error := 0.0;
+      (*цикл обучения по шаблонам*)
+      np := 0;
+      while !np<NumPattern do
+      (
+        (*выбираем шаблон*)
+        p := getvvalue(ranpat,!np);
+        (*активация скрытого слоя*)
+        (*
         (do [(j 0 (+ 1 j))] ((= j NumHidden))            
           (setvvalue SumH j (getmvalue WeightIH 0 j))
           (do [(i 0 (+ 1 i))] ((= i NumInput))
@@ -502,26 +513,28 @@ in
             )
           )
         )
-      (when (and DoOut (= (remainder epoch 10) 0));отладочный вывод
-        (printf "epoch=~S, error=~S\n" epoch Error)
-        )
-      (when (< Error GlobalMinError)
-        (set! GlobalMinError Error)
-        (printf "epoch=~S, (min)error=~S\n" epoch Error)
-        (write-network NetworkFile)
-        )
-      )
-    )
-  )
 *)
-  ()
+      if DoOut andalso Int.rem(!epoch, 10) = 0 then (*отладочный вывод*)
+        print ("epoch=" ^ Int.toString(!epoch) ^ ", error=" ^ Real.toString(!Error) ^ "\n")
+      else
+      ();
+      if !Error < !GlobalMinError then
+      (
+        GlobalMinError := !Error;
+        print ("epoch=" ^ Int.toString(!epoch) ^ ", (min)error=" ^ Real.toString(!Error) ^ "\n");
+        writenetwork(NetworkFile)
+      )
+      else
+      ();
+      np := !np + 1
+    );
+    epoch := !epoch + 1
+    end;
+  writenetwork(NetworkFile);
+  Error
 end
 end
 
-val _=(
-  readnetwork("network.txt");
-  writenetwork("network1.txt")
-)
 
 
 (*
@@ -606,7 +619,7 @@ val _=(
       )
     ))
 
-;пример создания использования нейронной сети
+(*пример создания использования нейронной сети*)
 
 (define NUMPAT 60) ;число обучающих шаблонов - может переопределяться в файле
 ;(set! NUMIN  4)  ;размерность входа - может переопределяться в файле
