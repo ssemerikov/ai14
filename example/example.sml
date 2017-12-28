@@ -333,6 +333,7 @@ in
       val p=ref 0
       and gen=Random.newgen()
       and np=ref 0
+      and j=ref 0
     in
       (*перемешиваем шаблоны*)
       while !p<NumPattern do
@@ -348,67 +349,39 @@ in
         (*выбираем шаблон*)
         p := getvvalue(ranpat,!np);
         (*активация скрытого слоя*)
+        j := 0;
+        while !j < NumHidden do
+        ( 
+          setvvalue(SumH,!j,getmvalue(!WeightIH,0,!j));
+          i := 0;
+          while !i < NumInput do
+          (
+            setvvalue(SumH,!j, getvvalue(SumH,!j)+getmvalue(Input,!p,!i)*getmvalue(!WeightIH, 1+ !i, !j));
+            i := !i + 1
+          );
+          setvvalue(Hidden,!j,1.0/(1.0+Math.exp(~(getvvalue(SumH,!j)))));
+          j := !j + 1
+        );
+        (*активация выходного слоя и вычисление ошибки*)
+        k := 0;
+        while !k < NumOutput do
+        (
+          setvvalue(SumO,!k,getmvalue(!WeightHO,0,!k));
+          j := 0;
+          while !j < NumHidden do
+          ( 
+            setvvalue(SumO, !k, getvvalue(SumO,!k)+getvvalue(Hidden,!j)*getmvalue(!WeightHO, 1+ !j, !k));
+            j := !j + 1
+          );
+          setvvalue(Output,!k, 1.0/(1.0+Math.exp(~(getvvalue(SumO,!k)))));
+          Error := !Error + 0.5*(getmvalue(Target,!p, !k)-getvvalue(Output,!k))*
+                        (getmvalue(Target,!p, !k)-getvvalue(Output,!k));
+          setvvalue(DeltaO,!k,(getmvalue(Target,!p, !k)- getvvalue(Output,!k))*
+                      getvvalue(Output,!k)*(1.0-getvvalue(Output,!k)));
+          k := !k + 1
+        );
+        (*обратное распространение ошибки на скрытый слой*)
         (*
-        (do [(j 0 (+ 1 j))] ((= j NumHidden))            
-          (setvvalue SumH j (getmvalue WeightIH 0 j))
-          (do [(i 0 (+ 1 i))] ((= i NumInput))
-            (setvvalue SumH j
-                       (+ (getvvalue SumH j)
-                          ( *  
-                           (getmvalue Input p i)
-                           (getmvalue WeightIH (1+ i) j)
-                           )
-                          )
-                       )
-            )
-          (setvvalue Hidden j (/ 1.0 
-                                 (+ 
-                                  1.0 
-                                  (exp (- (getvvalue SumH j)))
-                                  )    
-                                 )
-                     )
-          )
-        ;активация выходного слоя и вычисление ошибки
-        (do [(k 0 (+ 1 k))] ((= k NumOutput))        
-          (setvvalue SumO k (getmvalue WeightHO 0 k))
-          (do [(j 0 (+ 1 j))] ((= j NumHidden))            
-            (setvvalue SumO k (+ 
-                               (getvvalue SumO k) 
-                               ( * 
-                                (getvvalue Hidden j)
-                                (getmvalue WeightHO (1+ j) k)
-                                )
-                               )
-                       )
-            )
-          ;сигмоидальный вывод
-          
-          (setvvalue Output k (/ 1.0 
-                                 (+ 
-                                  1.0 
-                                  (exp (- (getvvalue SumO k)))
-                                  )    
-                                 )
-                     )
-          (set! Error (+ 
-                       Error
-                       ( *
-                        0.5 
-                        (- (getmvalue Target p k) (getvvalue Output k))
-                        (- (getmvalue Target p k) (getvvalue Output k))
-                        )
-                       )
-                )
-          (setvvalue DeltaO k 
-                     ( *
-                      (- (getmvalue Target p k) (getvvalue Output k))
-                      (getvvalue Output k)
-                      (- 1.0 (getvvalue Output k))
-                      )
-                     )
-          )
-        ;обратное распространение ошибки на скрытый слой
         (do [(j 0 (+ 1 j))] ((= j NumHidden))            
           (setvvalue SumDOW j 0.0)
           (do [(k 0 (+ 1 k))] ((= k NumOutput))        
