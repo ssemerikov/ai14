@@ -13,7 +13,7 @@ and mini=ref 0.0
 and maxi=ref 0.0
 and mino=ref 0.0
 and maxo=ref 0.0
-and GlobalMinError=ref 100000000
+and GlobalMinError=ref 100000000.0
 
 exception SizeError of string
 
@@ -114,7 +114,7 @@ fun int_from_stream stream =
   Option.valOf (TextIO.scanStream (Int.scan StringCvt.DEC) stream)
 
 fun real_from_stream stream =
-  Option.valOf (TextIO.scanStream (Real.scan StringCvt.DEC) stream)
+  Option.valOf (TextIO.scanStream (Real.scan) stream)
 
 fun readnetwork(filename)=
 let
@@ -136,12 +136,12 @@ in
       (setmvalue WeightHO i k (read f))
       )
     )
-  (set! mini (read f))
-  (set! maxi (read f))
-  (set! mino (read f))
-  (set! maxo (read f))
-  (set! GlobalMinError (read f))
    *)
+  mini := real_from_stream f;
+  maxi := real_from_stream f;
+  mino := real_from_stream f;
+  maxo := real_from_stream f;
+  GlobalMinError := real_from_stream f;
   TextIO.closeIn(f)
 end
 
