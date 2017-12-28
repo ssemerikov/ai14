@@ -9,10 +9,10 @@ and WeightIH=ref (Array2.array(0,0,0.0)) (*соединения входа и скрытого слоя*)
 and WeightHO=ref (Array2.array(0,0,0.0)) (*соединения скрытого слоя и выходa*)
 
 (*для нормализации*)
-and mini=ref 0
-and maxi=ref 0
-and mino=ref 0
-and maxo=ref 0
+and mini=ref 0.0
+and maxi=ref 0.0
+and mino=ref 0.0
+and maxo=ref 0.0
 and GlobalMinError=ref 100000000
 
 exception SizeError of string
@@ -111,13 +111,16 @@ end
   загружать матрицы весовых коэффициентов*)
 
 fun readnetwork(filename)=
-  (define f (open-input-file filename  #:mode 'text))
+let
+  val f=TextIO.openIn(filename)
+in
+(*
   (set! NUMIN (read f))
   (set! NUMOUT (read f))
   (set! NUMHID (read f))
-
-  (make-network NUMIN NUMOUT NUMHID)
-
+ *)
+  makenetwork(!NUMIN,!NUMOUT,!NUMHID);
+   (*
   (do [(i 0 (+ 1 i))] ((= i (+ 1 NUMIN)))
     (do [(k 0 (+ 1 k))] ((= k NUMHID))        
       (setmvalue WeightIH i k (read f))
@@ -134,10 +137,12 @@ fun readnetwork(filename)=
   (set! mino (read f))
   (set! maxo (read f))
   (set! GlobalMinError (read f))
-  
-  (close-input-port f)
-  )
+   *)
+  TextIO.closeIn(f)
+end
 
+val _=readnetwork("network.txt")
+     (*
 fun writenetwork(filename)=
   (define f (open-output-file filename  #:mode 'text #:exists 'replace))
 
@@ -160,7 +165,7 @@ fun writenetwork(filename)=
   (fprintf f " ~S" GlobalMinError)
   
   (close-output-port f)
-  )
+  )    *)
 
 
 (*обучение нейронной сети*)
@@ -263,10 +268,10 @@ in
     );
     
     (*нормализация*)
-    i := 0;
+    i := 0;       
     while !i < NumPattern do
-    (
-      k := 0;
+    (         
+      k := 0; 
       while !k < NumInput do
       (
         setmvalue(Input,!i,!k, (getmvalue(Input,!i,!k) - !mini) / (!maxi - !mini) );
@@ -277,9 +282,9 @@ in
       (
         setmvalue(Target,!i,!k, (getmvalue(Target,!i,!k) - !mino) / (!maxo - !mino));
         k := !k + 1
-      );
+      );       
       i := !i + 1
-    )
+    );              
 
       (*
     ;цикл обучения по достижению заданной ошибки или числа итераций
