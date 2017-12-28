@@ -110,19 +110,20 @@ end
 (*с помощью этих функций можно сохранять и 
   загружать матрицы весовых коэффициентов*)
 
+fun int_from_stream stream =
+  Option.valOf (TextIO.scanStream (Int.scan StringCvt.DEC) stream)
+
+fun real_from_stream stream =
+  Option.valOf (TextIO.scanStream (Real.scan StringCvt.DEC) stream)
+
 fun readnetwork(filename)=
 let
   val f=TextIO.openIn(filename)
 in
-  let
-    val data=TextIO.inputAll(f)
-  in
-(*
-  (set! NUMIN (read f))
-  (set! NUMOUT (read f))
-  (set! NUMHID (read f))
- *)
-    makenetwork(!NUMIN,!NUMOUT,!NUMHID);
+  NUMIN := int_from_stream f;
+  NUMOUT := int_from_stream f;
+  NUMHID := int_from_stream f;
+  makenetwork(!NUMIN,!NUMOUT,!NUMHID);
    (*
   (do [(i 0 (+ 1 i))] ((= i (+ 1 NUMIN)))
     (do [(k 0 (+ 1 k))] ((= k NUMHID))        
@@ -141,7 +142,6 @@ in
   (set! maxo (read f))
   (set! GlobalMinError (read f))
    *)
-  end
   TextIO.closeIn(f)
 end
 
