@@ -381,112 +381,50 @@ in
           k := !k + 1
         );
         (*обратное распространение ошибки на скрытый слой*)
-        (*
-        (do [(j 0 (+ 1 j))] ((= j NumHidden))            
-          (setvvalue SumDOW j 0.0)
-          (do [(k 0 (+ 1 k))] ((= k NumOutput))        
-            (setvvalue SumDOW j 
-                       (+
-                        (getvvalue SumDOW j)
-                        ( *
-                         (getmvalue WeightHO (1+ j) k)
-                         (getvvalue DeltaO k)
-                         )
-                        )
-                       )
-            )
-          (setvvalue DeltaH j 
-                     ( * 
-                      (getvvalue SumDOW j)
-                      (getvvalue Hidden j)
-                      (- 1.0 (getvvalue Hidden j))
-                      )
-                     )
-          )
-        (do [(j 0 (+ 1 j))] ((= j NumHidden))            
-          (setmvalue DeltaWeightIH 0 j 
-                     (+
-                      ( * 
-                       eta 
-                       (getvvalue DeltaH j)
-                       )
-                      ( *
-                       alpha 
-                       (getmvalue DeltaWeightIH 0 j)
-                       )
-                      )
-                     )
-          (setmvalue WeightIH 0 j 
-                     (+
-                      (getmvalue WeightIH 0 j)
-                      (getmvalue DeltaWeightIH 0 j)
-                      )
-                     )
-          (do [(i 0 (+ 1 i))] ((= i NumInput))
-            (setmvalue DeltaWeightIH (1+ i) j 
-                       (+
-                        ( * 
-                         eta 
-                         (getmvalue Input p i)
-                         (getvvalue DeltaH j)
-                         )
-                        ( *
-                         alpha 
-                         (getmvalue DeltaWeightIH (1+ i) j)
-                         )
-                        )
-                       )
-            (setmvalue WeightIH (1+ i) j 
-                       (+
-                        (getmvalue WeightIH (1+ i) j)
-                        (getmvalue DeltaWeightIH (1+ i) j)
-                        )
-                       )
-            )
-          )
-        (do [(k 0 (+ 1 k))] ((= k NumOutput))        
-          (setmvalue DeltaWeightHO 0 k
-                     (+
-                      ( * 
-                       eta 
-                       (getvvalue DeltaO k)
-                       )
-                      ( *
-                       alpha 
-                       (getmvalue DeltaWeightHO 0 k)
-                       )
-                      )
-                     )
-          (setmvalue WeightHO 0 k
-                     (+
-                      (getmvalue WeightHO 0 k)
-                      (getmvalue DeltaWeightHO 0 k)
-                      )
-                     )
-          (do [(j 0 (+ 1 j))] ((= j NumHidden))            
-            (setmvalue DeltaWeightHO (1+ j) k
-                       (+
-                        ( * 
-                         eta 
-                         (getvvalue Hidden j)
-                         (getvvalue DeltaO k)
-                         )
-                        ( *
-                         alpha 
-                         (getmvalue DeltaWeightHO (1+ j) k)
-                         )
-                        )
-                       )
-            (setmvalue WeightHO (1+ j) k
-                       (+
-                        (getmvalue WeightHO (1+ j) k)
-                        (getmvalue DeltaWeightHO (1+ j) k)
-                        )
-                       )
-            )
-          )
-        )
-*)
+        j := 0;
+        while !j < NumHidden do
+        ( 
+          setvvalue(SumDOW,!j, 0.0);
+          k := 0;
+          while !k < NumOutput do
+          (
+            setvvalue(SumDOW,!j,getvvalue(SumDOW,!j)+getmvalue(!WeightHO,1+ !j, !k)*getvvalue(DeltaO,!k));
+            k := !k + 1
+          );
+          setvvalue(DeltaH,!j,getvvalue(SumDOW, !j)*getvvalue(Hidden, !j)*(1.0 -getvvalue(Hidden,!j)));
+          j := !j + 1
+        );
+        j := 0;
+        while !j < NumHidden do
+        ( 
+          setmvalue(DeltaWeightIH,0, !j,eta*getvvalue(DeltaH,!j)+alpha*getmvalue(DeltaWeightIH,0,!j));
+          setmvalue(!WeightIH,0, !j, getmvalue(!WeightIH,0, !j)+getmvalue(DeltaWeightIH,0,!j));
+          i := 0;
+          while !i < NumInput do
+          (
+            setmvalue(DeltaWeightIH, 1+ !i, !j,
+                eta*getmvalue(Input,!p,!i)*getvvalue(DeltaH,!j)+alpha*getmvalue(DeltaWeightIH, 1+ !i, !j));
+            setmvalue(!WeightIH, 1+ !i, !j,getmvalue(!WeightIH, 1+ !i, !j)+getmvalue(DeltaWeightIH,1+ !i, !j));
+            i := !i + 1
+          );
+          j := !j + 1
+        );
+        k := 0;
+        while !k < NumOutput do
+        (
+          setmvalue(DeltaWeightHO,0,!k,eta*getvvalue(DeltaO,!k)+alpha*getmvalue(DeltaWeightHO,0,!k));
+          setmvalue(!WeightHO,0, !k,getmvalue(!WeightHO,0, !k)+getmvalue(DeltaWeightHO, 0, !k));
+          j := 0;
+          while !j < NumHidden do
+          ( 
+            setmvalue(DeltaWeightHO,1+ !j, !k,
+                      eta*getvvalue(Hidden,!j)*getvvalue(DeltaO,!k)+alpha*getmvalue(DeltaWeightHO,1+ !j, !k));
+            setmvalue(!WeightHO, 1+ !j, !k,getmvalue(!WeightHO, 1+ !j, !k)+getmvalue(DeltaWeightHO, 1+ !j, !k));
+            j := !j + 1
+          );
+          k := !k + 1
+        );
+        
       if DoOut andalso Int.rem(!epoch, 10) = 0 then (*отладочный вывод*)
         print ("epoch=" ^ Int.toString(!epoch) ^ ", error=" ^ Real.toString(!Error) ^ "\n")
       else
@@ -508,10 +446,10 @@ in
 end
 end
 
+(*подача сигнала на вход сети и получение результата*)
 
 
 (*
-;подача сигнала на вход сети и получение результата
 (define (getoutput BeInput 
                    )
   (let ( 
