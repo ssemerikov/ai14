@@ -114,12 +114,15 @@ fun readnetwork(filename)=
 let
   val f=TextIO.openIn(filename)
 in
+  let
+    val data=TextIO.inputAll(f)
+  in
 (*
   (set! NUMIN (read f))
   (set! NUMOUT (read f))
   (set! NUMHID (read f))
  *)
-  makenetwork(!NUMIN,!NUMOUT,!NUMHID);
+    makenetwork(!NUMIN,!NUMOUT,!NUMHID);
    (*
   (do [(i 0 (+ 1 i))] ((= i (+ 1 NUMIN)))
     (do [(k 0 (+ 1 k))] ((= k NUMHID))        
@@ -138,6 +141,7 @@ in
   (set! maxo (read f))
   (set! GlobalMinError (read f))
    *)
+  end
   TextIO.closeIn(f)
 end
 
