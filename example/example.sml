@@ -474,57 +474,38 @@ in
     j := 0;
     while !j < NumHidden do
     (
-      setvvalue(SumH,!j,getmvalue(!WeightIH,0,!j))
-      (do [(i 0 (+ 1 i))] ((= i NumInput))
-        (setvvalue SumH j
-                   (+ (getvvalue SumH j)
-                      ( * 
-                       (getvvalue Input i)
-                       (getmvalue WeightIH (1+ i) j)
-                       )
-                      )
-                   )
-        )
-      (setvvalue Hidden j (/ 1.0 
-                             (+ 
-                              1.0 
-                              (exp (- (getvvalue SumH j)))
-                              )    
-                             )
-                 )
+      setvvalue(SumH,!j,getmvalue(!WeightIH,0,!j));
+      i := 0;
+      while !i < NumInput do
+      ( 
+        setvvalue(SumH, !j, getvvalue(SumH, !j)+getvvalue(Input,!i)*getmvalue(!WeightIH,1+ !i, !j));
+        i := !i + 1
+      );
+      setvvalue(Hidden,!j,1.0/(1.0+Math.exp(~(getvvalue(SumH, !j)))));
       j := !j + 1
     );
     
     (*активация выходного слоя*)
-    (do [(k 0 (+ 1 k))] ((= k NumOutput))        
-      (setvvalue SumO k (getmvalue WeightHO 0 k))
-      (do [(j 0 (+ 1 j))] ((= j NumHidden))            
-        (setvvalue SumO k (+ 
-                           (getvvalue SumO k) 
-                           ( * 
-                            (getvvalue Hidden j)
-                            (getmvalue WeightHO (1+ j) k)
-                            )
-                           )
-                   )
-        )
-      (setvvalue Output k (/ 1.0 
-                             (+ 
-                              1.0 
-                              (exp (- (getvvalue SumO k)))
-                              )    
-                             )
-                 )
-      )
-    
-    (*денормализация выхода*)
     k := 0;
-    while !k < NumOuput do
+    while !k < NumOutput do
     (
-      setvvalue(result,!k, getvvalue(Output,!k)*(!maxo - !mino)+ !mino);
+      setvvalue(SumO,!k,getmvalue(!WeightHO,0,!k));
+      j := 0;
+      while !j < NumHidden do
+      (
+        setvvalue(SumO,!k, getvvalue(SumO,!k)+getvvalue(Hidden,!j)*getmvalue(!WeightHO,1+ !j, !k));
+        j := !j + 1
+      );
+      setvvalue(Output,!k,1.0/(1.0+Math.exp(~(getvvalue(SumO, !k)))));
       k := !k +1
     );
     
+    (*денормализация выхода*)
+    k := 0;
+    while !k < NumOutput do
+    (
+      setvvalue(result,!k, getvvalue(Output,!k)*(!maxo - !mino)+ !mino);
+      k := !k +1
     )
 end
 
