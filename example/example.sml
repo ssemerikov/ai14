@@ -447,35 +447,34 @@ end
 end
 
 (*подача сигнала на вход сети и получение результата*)
-
-
-(*
-(define (getoutput BeInput 
-                   )
-  (let ( 
-        [Input (make-vector NUMIN)]
-        [Output (make-vector NUMOUT)]
-        [result (make-vector NUMOUT)]
-        [SumH (make-vector NUMHID)]
-        [Hidden (make-vector NUMHID)]
-        [SumO (make-vector NUMOUT)]
-        [NumInput NUMIN]
-        [NumHidden NUMHID]
-        [NumOutput NUMOUT]
-        )
+fun getoutput(BeInput)=
+let
+  val Input=makevector(!NUMIN,0.0)
+  and Output=makevector(!NUMOUT,0.0)
+  and result=makevector(!NUMOUT,0.0)
+  and SumH=makevector(!NUMHID,0.0)
+  and Hidden=makevector(!NUMHID,0.0)
+  and SumO=makevector(!NUMOUT,0.0)
+  and NumInput=(!NUMIN)
+  and NumHidden=(!NUMHID)
+  and NumOutput=(!NUMOUT)
+  and k=ref 0
+  and i=ref 0
+  and j=ref 0
+in
+    (*нормализация входа*)
+    k := 0;
+    while !k < NumInput do
+    (
+      setvvalue(Input,!k, (getvvalue(BeInput,!k)- !mini)/(!maxi - !mini));
+      k := !k +1
+    );
     
-    ;нормализация входа
-    (do [(k 0 (+ 1 k))] ((= k NumInput))        
-      (setvvalue Input k (/
-                          (- (getvvalue BeInput k) mini)
-                          (- maxi mini)
-                          )
-                 )
-      )
-    
-    ;активация скрытого слоя
-    (do [(j 0 (+ 1 j))] ((= j NumHidden))            
-      (setvvalue SumH j (getmvalue WeightIH 0 j))
+    (*активация скрытого слоя*)
+    j := 0;
+    while !j < NumHidden do
+    (
+      setvvalue(SumH,!j,getmvalue(!WeightIH,0,!j))
       (do [(i 0 (+ 1 i))] ((= i NumInput))
         (setvvalue SumH j
                    (+ (getvvalue SumH j)
@@ -493,9 +492,10 @@ end
                               )    
                              )
                  )
-      )
+      j := !j + 1
+    );
     
-    ;активация выходного слоя
+    (*активация выходного слоя*)
     (do [(k 0 (+ 1 k))] ((= k NumOutput))        
       (setvvalue SumO k (getmvalue WeightHO 0 k))
       (do [(j 0 (+ 1 j))] ((= j NumHidden))            
@@ -517,18 +517,19 @@ end
                  )
       )
     
-    ;денормализация выхода
-    (do [(k 0 (+ 1 k))] ((= k NumOutput) result)        
-      (setvvalue result k (+
-                           ( *
-                            (getvvalue Output k)
-                            (- maxo mino)
-                            )
-                           mino
-                           )
-                 )
-      )
-    ))
+    (*денормализация выхода*)
+    k := 0;
+    while !k < NumOuput do
+    (
+      setvvalue(result,!k, getvvalue(Output,!k)*(!maxo - !mino)+ !mino);
+      k := !k +1
+    );
+    
+    )
+end
+
+
+(*
 
 (*пример создания использования нейронной сети*)
 
