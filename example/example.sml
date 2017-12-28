@@ -119,24 +119,35 @@ fun real_from_stream stream =
 fun readnetwork(filename)=
 let
   val f=TextIO.openIn(filename)
+  and i=ref 0
+  and k=ref 0
 in
   NUMIN := int_from_stream f;
   NUMOUT := int_from_stream f;
   NUMHID := int_from_stream f;
   makenetwork(!NUMIN,!NUMOUT,!NUMHID);
-   (*
-  (do [(i 0 (+ 1 i))] ((= i (+ 1 NUMIN)))
-    (do [(k 0 (+ 1 k))] ((= k NUMHID))        
-      (setmvalue WeightIH i k (read f))
-      )
-    )
-
-  (do [(i 0 (+ 1 i))] ((= i (+ 1 NUMHID)))
-    (do [(k 0 (+ 1 k))] ((= k NUMOUT))        
-      (setmvalue WeightHO i k (read f))
-      )
-    )
-   *)
+  i := 0;
+  while !i < !NUMIN+1 do
+  (   
+    k := 0;
+    while !k < !NUMHID do
+    (
+      setmvalue(!WeightIH,!i,!k, real_from_stream f);
+      k := !k + 1
+    );
+    i := !i + 1
+  );
+  i := 0;
+  while !i < !NUMHID+1 do
+  (   
+    k := 0;
+    while !k < !NUMOUT do
+    (
+      setmvalue(!WeightHO,!i,!k, real_from_stream f);
+      k := !k + 1
+    );
+    i := !i + 1
+  );
   mini := real_from_stream f;
   maxi := real_from_stream f;
   mino := real_from_stream f;
@@ -145,32 +156,56 @@ in
   TextIO.closeIn(f)
 end
 
-val _=readnetwork("network.txt")
-     (*
 fun writenetwork(filename)=
-  (define f (open-output-file filename  #:mode 'text #:exists 'replace))
-
-  (fprintf f "~S ~S ~S\n" NUMIN NUMOUT NUMHID)
-
-  (do [(i 0 (+ 1 i))] ((= i (+ 1 NUMIN)))
-    (do [(k 0 (+ 1 k))] ((= k NUMHID) (fprintf f "\n"))        
-      (fprintf f "~S " (getmvalue WeightIH i k))
-      )
-    )
-
-  (do [(i 0 (+ 1 i))] ((= i (+ 1 NUMHID)))
-    (do [(k 0 (+ 1 k))] ((= k NUMOUT) (fprintf f "\n"))        
-      (fprintf f "~S " (getmvalue WeightHO i k))
-      )
-    )
-
-  (fprintf f " ~S ~S " mini maxi)
-  (fprintf f " ~S ~S " mino maxo)
-  (fprintf f " ~S" GlobalMinError)
-  
-  (close-output-port f)
-  )    *)
-
+let
+  val f=TextIO.openOut(filename)
+  and i=ref 0
+  and k=ref 0
+in
+  TextIO.output(f,Int.toString(!NUMIN));
+  TextIO.output(f," ");
+  TextIO.output(f,Int.toString(!NUMOUT));
+  TextIO.output(f," ");
+  TextIO.output(f,Int.toString(!NUMHID));
+  TextIO.output(f,"\n");
+  i := 0;
+  while !i < !NUMIN+1 do
+  (   
+    k := 0;
+    while !k < !NUMHID do
+    (
+      TextIO.output(f,Real.toString(getmvalue(!WeightIH,!i,!k)));
+      TextIO.output(f," ");
+      k := !k + 1
+    );
+    TextIO.output(f,"\n");
+    i := !i + 1
+  );
+  i := 0;
+  while !i < !NUMHID+1 do
+  (   
+    k := 0;
+    while !k < !NUMOUT do
+    (
+      TextIO.output(f,Real.toString(getmvalue(!WeightHO,!i,!k)));
+      TextIO.output(f," ");
+      k := !k + 1
+    );
+    TextIO.output(f,"\n");
+    i := !i + 1
+  );
+  TextIO.output(f,Real.toString(!mini));
+  TextIO.output(f," ");
+  TextIO.output(f,Real.toString(!maxi));
+  TextIO.output(f," ");
+  TextIO.output(f,Real.toString(!mino));
+  TextIO.output(f," ");
+  TextIO.output(f,Real.toString(!maxo));
+  TextIO.output(f," ");
+  TextIO.output(f,Real.toString(!GlobalMinError));
+  TextIO.output(f,"\n");
+  TextIO.closeOut(f)
+end    
 
 (*обучение нейронной сети*)
 fun train(TrainInput,TrainTarget,Err,MaxCount,DoOut,NetworkFile)=
@@ -482,6 +517,12 @@ in
   ()
 end
 end
+
+val _=(
+  readnetwork("network.txt");
+  writenetwork("network1.txt")
+)
+
 
 (*
 ;подача сигнала на вход сети и получение результата
