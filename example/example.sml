@@ -337,7 +337,7 @@ in
 
     (*цикл обучения по достижению заданной ошибки или числа итераций*)
     epoch := 0;
-    while !epoch < MaxCount andalso !Error<Err do
+    while !epoch < MaxCount andalso !GlobalMinError >= Err do
     let
       val p=ref 0
       and gen=Random.newgen()
@@ -434,7 +434,7 @@ in
           k := !k + 1
         );
         
-      if DoOut andalso Int.rem(!epoch, 10) = 0 then (*отладочный вывод*)
+      if DoOut andalso Int.rem(!epoch, 100) = 0 then (*отладочный вывод*)
         print ("epoch=" ^ Int.toString(!epoch) ^ ", error=" ^ Real.toString(!Error) ^ "\n")
       else
       ();
@@ -565,11 +565,12 @@ in
   makenetwork(!NUMIN,!NUMOUT,!NUMHID);
   print("Размерность входа - " ^ Int.toString(!NUMIN) ^ ", размерность выхода - " ^  Int.toString(!NUMOUT) ^ 
         ", число шаблонов - " ^ Int.toString(!NUMPAT)^ "\n");
-  train(Input,Output,0.00001,150000, true, "network.txt");
+  train(Input,Output,0.000001,150000, true, "network.txt");
   (* readnetwork("network.txt"); *)
   
   print "Исходные данные:\n";
   i := 0;
+
   while !i < !NUMPAT do
   (
     print "Вход: ";
