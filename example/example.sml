@@ -1,14 +1,14 @@
-(*трехлойная нейронная сеть (вход, скрытый слой, выход*)
+(*╤В╤А╨╡╤Е╨╗╨╛╨╣╨╜╨░╤П ╨╜╨╡╨╣╤А╨╛╨╜╨╜╨░╤П ╤Б╨╡╤В╤М (╨▓╤Е╨╛╨┤, ╤Б╨║╤А╤Л╤В╤Л╨╣ ╤Б╨╗╨╛╨╣, ╨▓╤Л╤Е╨╛╨┤*)
 
-val NUMIN=ref 0   (*размерность входа*)
-and NUMHID=ref 0  (*размерность скрытого слоя*)
-and NUMOUT=ref 0  (*размерность выхода*)
+val NUMIN=ref 0   (*╤А╨░╨╖╨╝╨╡╤А╨╜╨╛╤Б╤В╤М ╨▓╤Е╨╛╨┤╨░*)
+and NUMHID=ref 0  (*╤А╨░╨╖╨╝╨╡╤А╨╜╨╛╤Б╤В╤М ╤Б╨║╤А╤Л╤В╨╛╨│╨╛ ╤Б╨╗╨╛╤П*)
+and NUMOUT=ref 0  (*╤А╨░╨╖╨╝╨╡╤А╨╜╨╛╤Б╤В╤М ╨▓╤Л╤Е╨╛╨┤╨░*)
 
-(*матрицы весовых коэффициентов*)
-and WeightIH=ref (Array2.array(0,0,0.0)) (*соединения входа и скрытого слоя*)
-and WeightHO=ref (Array2.array(0,0,0.0)) (*соединения скрытого слоя и выходa*)
+(*╨╝╨░╤В╤А╨╕╤Ж╤Л ╨▓╨╡╤Б╨╛╨▓╤Л╤Е ╨║╨╛╤Н╤Д╤Д╨╕╤Ж╨╕╨╡╨╜╤В╨╛╨▓*)
+and WeightIH=ref (Array2.array(0,0,0.0)) (*╤Б╨╛╨╡╨┤╨╕╨╜╨╡╨╜╨╕╤П ╨▓╤Е╨╛╨┤╨░ ╨╕ ╤Б╨║╤А╤Л╤В╨╛╨│╨╛ ╤Б╨╗╨╛╤П*)
+and WeightHO=ref (Array2.array(0,0,0.0)) (*╤Б╨╛╨╡╨┤╨╕╨╜╨╡╨╜╨╕╤П ╤Б╨║╤А╤Л╤В╨╛╨│╨╛ ╤Б╨╗╨╛╤П ╨╕ ╨▓╤Л╤Е╨╛╨┤a*)
 
-(*для нормализации*)
+(*╨┤╨╗╤П ╨╜╨╛╤А╨╝╨░╨╗╨╕╨╖╨░╤Ж╨╕╨╕*)
 and mini=ref 0.0
 and maxi=ref 0.0
 and mino=ref 0.0
@@ -20,21 +20,21 @@ exception SizeError of string
 fun random()=
   Random.random(Random.newgen())
 
-(*функции для создания векторов и матриц*)
+(*╤Д╤Г╨╜╨║╤Ж╨╕╨╕ ╨┤╨╗╤П ╤Б╨╛╨╖╨┤╨░╨╜╨╕╤П ╨▓╨╡╨║╤В╨╛╤А╨╛╨▓ ╨╕ ╨╝╨░╤В╤А╨╕╤Ж*)
 
 fun makevector(size, value)=
   if size>0 then
       Array.array(size,value)
   else
-      raise SizeError "Недозволенная размерность вектора"
+      raise SizeError "╨Э╨╡╨┤╨╛╨╖╨▓╨╛╨╗╨╡╨╜╨╜╨░╤П ╤А╨░╨╖╨╝╨╡╤А╨╜╨╛╤Б╤В╤М ╨▓╨╡╨║╤В╨╛╤А╨░"
 
 fun makematrix(m,n,value)=
   if m>0 andalso n>0 then
       Array2.array(m, n, value)
   else
-      raise SizeError "Недозволенная размерность матрицы"
+      raise SizeError "╨Э╨╡╨┤╨╛╨╖╨▓╨╛╨╗╨╡╨╜╨╜╨░╤П ╤А╨░╨╖╨╝╨╡╤А╨╜╨╛╤Б╤В╤М ╨╝╨░╤В╤А╨╕╤Ж╤Л"
 
-(*функции для получения/установки значений векторов и матриц*)
+(*╤Д╤Г╨╜╨║╤Ж╨╕╨╕ ╨┤╨╗╤П ╨┐╨╛╨╗╤Г╤З╨╡╨╜╨╕╤П/╤Г╤Б╤В╨░╨╜╨╛╨▓╨║╨╕ ╨╖╨╜╨░╤З╨╡╨╜╨╕╨╣ ╨▓╨╡╨║╤В╨╛╤А╨╛╨▓ ╨╕ ╨╝╨░╤В╤А╨╕╤Ж*)
 
 fun getvvalue(obj, i)=
   Array.sub(obj,i)
@@ -73,7 +73,7 @@ fun printvector(v)=
     print "\n"
   end 
 
-(*создание нейронной сети*)
+(*╤Б╨╛╨╖╨┤╨░╨╜╨╕╨╡ ╨╜╨╡╨╣╤А╨╛╨╜╨╜╨╛╨╣ ╤Б╨╡╤В╨╕*)
 
 fun makenetwork (NUMIN0, NUMOUT0, NUMHID0)=
 let
@@ -89,7 +89,7 @@ in
   WeightIH := makematrix(1 + !NUMIN, !NUMHID, 0.0);
   WeightHO := makematrix(1 + !NUMHID, !NUMOUT, 0.0);
 
-  (*устанавливаем случайные весовые коэффициенты*)
+  (*╤Г╤Б╤В╨░╨╜╨░╨▓╨╗╨╕╨▓╨░╨╡╨╝ ╤Б╨╗╤Г╤З╨░╨╣╨╜╤Л╨╡ ╨▓╨╡╤Б╨╛╨▓╤Л╨╡ ╨║╨╛╤Н╤Д╤Д╨╕╤Ж╨╕╨╡╨╜╤В╤Л*)
   j := 0;
   while !j < !NUMHID do
   (
@@ -116,8 +116,8 @@ in
   )
 end
 
-(*с помощью этих функций можно сохранять и 
-  загружать матрицы весовых коэффициентов*)
+(*╤Б ╨┐╨╛╨╝╨╛╤Й╤М╤О ╤Н╤В╨╕╤Е ╤Д╤Г╨╜╨║╤Ж╨╕╨╣ ╨╝╨╛╨╢╨╜╨╛ ╤Б╨╛╤Е╤А╨░╨╜╤П╤В╤М ╨╕ 
+  ╨╖╨░╨│╤А╤Г╨╢╨░╤В╤М ╨╝╨░╤В╤А╨╕╤Ж╤Л ╨▓╨╡╤Б╨╛╨▓╤Л╤Е ╨║╨╛╤Н╤Д╤Д╨╕╤Ж╨╕╨╡╨╜╤В╨╛╨▓*)
 
 fun read_int stream =
   Option.valOf (TextIO.scanStream (Int.scan StringCvt.DEC) stream)
@@ -216,10 +216,10 @@ in
   TextIO.closeOut(f)
 end    
 
-(*обучение нейронной сети*)
+(*╨╛╨▒╤Г╤З╨╡╨╜╨╕╨╡ ╨╜╨╡╨╣╤А╨╛╨╜╨╜╨╛╨╣ ╤Б╨╡╤В╨╕*)
 fun train(TrainInput,TrainTarget,Err,MaxCount,DoOut,NetworkFile)=
 let
-  val NUMPAT=Array2.nRows(TrainInput) (*число обучающих шаблонов*)
+  val NUMPAT=Array2.nRows(TrainInput) (*╤З╨╕╤Б╨╗╨╛ ╨╛╨▒╤Г╤З╨░╤О╤Й╨╕╤Е ╤И╨░╨▒╨╗╨╛╨╜╨╛╨▓*)
 in
 let
   val Error=ref (Err+1.0)
@@ -230,7 +230,7 @@ let
   and NumInput=(!NUMIN)
   and NumHidden=(!NUMHID)
   and NumOutput=(!NUMOUT)
-         (*временные массивы*)
+         (*╨▓╤А╨╡╨╝╨╡╨╜╨╜╤Л╨╡ ╨╝╨░╤Б╤Б╨╕╨▓╤Л*)
   and DeltaWeightIH=makematrix(1+ !NUMIN,!NUMHID, 0.0)
   and DeltaWeightHO=makematrix(1+ !NUMHID,!NUMOUT, 0.0)
   and SumDOW=makevector(!NUMHID,0.0)
@@ -247,7 +247,7 @@ let
   and epoch=ref 0
 in
     
-    (*копируем тренировочные матрицы во временные во избежание порчи*)
+    (*╨║╨╛╨┐╨╕╤А╤Г╨╡╨╝ ╤В╤А╨╡╨╜╨╕╤А╨╛╨▓╨╛╤З╨╜╤Л╨╡ ╨╝╨░╤В╤А╨╕╤Ж╤Л ╨▓╨╛ ╨▓╤А╨╡╨╝╨╡╨╜╨╜╤Л╨╡ ╨▓╨╛ ╨╕╨╖╨▒╨╡╨╢╨░╨╜╨╕╨╡ ╨┐╨╛╤А╤З╨╕*)
   i := 0;
   while !i < NUMPAT do
   (
@@ -271,7 +271,7 @@ in
     );
     i := !i + 1
   );
-    (*если существует файл NetworkFile - загрузим его для дообучения*)
+    (*╨╡╤Б╨╗╨╕ ╤Б╤Г╤Й╨╡╤Б╤В╨▓╤Г╨╡╤В ╤Д╨░╨╣╨╗ NetworkFile - ╨╖╨░╨│╤А╤Г╨╖╨╕╨╝ ╨╡╨│╨╛ ╨┤╨╗╤П ╨┤╨╛╨╛╨▒╤Г╤З╨╡╨╜╨╕╤П*)
 
     if FileSys.access(NetworkFile,[]) then 
       readnetwork(NetworkFile)
@@ -282,7 +282,7 @@ in
        mino := getmvalue(Target,0,0);
        maxo := getmvalue(Target,0,0);
     
-       (*поиск граничных значений в числовых массивах*)
+       (*╨┐╨╛╨╕╤Б╨║ ╨│╤А╨░╨╜╨╕╤З╨╜╤Л╤Е ╨╖╨╜╨░╤З╨╡╨╜╨╕╨╣ ╨▓ ╤З╨╕╤Б╨╗╨╛╨▓╤Л╤Е ╨╝╨░╤Б╤Б╨╕╨▓╨░╤Е*)
        i := 0;
        while !i < NumPattern do
        (
@@ -316,7 +316,7 @@ in
        )
     );
     
-    (*нормализация*)
+    (*╨╜╨╛╤А╨╝╨░╨╗╨╕╨╖╨░╤Ж╨╕╤П*)
     i := 0;       
     while !i < NumPattern do
     (         
@@ -335,7 +335,7 @@ in
       i := !i + 1
     );              
 
-    (*цикл обучения по достижению заданной ошибки или числа итераций*)
+    (*╤Ж╨╕╨║╨╗ ╨╛╨▒╤Г╤З╨╡╨╜╨╕╤П ╨┐╨╛ ╨┤╨╛╤Б╤В╨╕╨╢╨╡╨╜╨╕╤О ╨╖╨░╨┤╨░╨╜╨╜╨╛╨╣ ╨╛╤И╨╕╨▒╨║╨╕ ╨╕╨╗╨╕ ╤З╨╕╤Б╨╗╨░ ╨╕╤В╨╡╤А╨░╤Ж╨╕╨╣*)
     epoch := 0;
     while !epoch < MaxCount andalso !GlobalMinError >= Err do
     let
@@ -344,20 +344,20 @@ in
       and np=ref 0
       and j=ref 0
     in
-      (*перемешиваем шаблоны*)
+      (*╨┐╨╡╤А╨╡╨╝╨╡╤И╨╕╨▓╨░╨╡╨╝ ╤И╨░╨▒╨╗╨╛╨╜╤Л*)
       while !p<NumPattern do
       (
         setvvalue(ranpat,!p,Random.range(0,NumPattern) gen); 
         p := !p + 1
       );
       Error := 0.0;
-      (*цикл обучения по шаблонам*)
+      (*╤Ж╨╕╨║╨╗ ╨╛╨▒╤Г╤З╨╡╨╜╨╕╤П ╨┐╨╛ ╤И╨░╨▒╨╗╨╛╨╜╨░╨╝*)
       np := 0;
       while !np<NumPattern do
       (
-        (*выбираем шаблон*)
+        (*╨▓╤Л╨▒╨╕╤А╨░╨╡╨╝ ╤И╨░╨▒╨╗╨╛╨╜*)
         p := getvvalue(ranpat,!np);
-        (*активация скрытого слоя*)
+        (*╨░╨║╤В╨╕╨▓╨░╤Ж╨╕╤П ╤Б╨║╤А╤Л╤В╨╛╨│╨╛ ╤Б╨╗╨╛╤П*)
         j := 0;
         while !j < NumHidden do
         ( 
@@ -371,7 +371,7 @@ in
           setvvalue(Hidden,!j,1.0/(1.0+Math.exp(~(getvvalue(SumH,!j)))));
           j := !j + 1
         );
-        (*активация выходного слоя и вычисление ошибки*)
+        (*╨░╨║╤В╨╕╨▓╨░╤Ж╨╕╤П ╨▓╤Л╤Е╨╛╨┤╨╜╨╛╨│╨╛ ╤Б╨╗╨╛╤П ╨╕ ╨▓╤Л╤З╨╕╤Б╨╗╨╡╨╜╨╕╨╡ ╨╛╤И╨╕╨▒╨║╨╕*)
         k := 0;
         while !k < NumOutput do
         (
@@ -389,7 +389,7 @@ in
                       getvvalue(Output,!k)*(1.0-getvvalue(Output,!k)));
           k := !k + 1
         );
-        (*обратное распространение ошибки на скрытый слой*)
+        (*╨╛╨▒╤А╨░╤В╨╜╨╛╨╡ ╤А╨░╤Б╨┐╤А╨╛╤Б╤В╤А╨░╨╜╨╡╨╜╨╕╨╡ ╨╛╤И╨╕╨▒╨║╨╕ ╨╜╨░ ╤Б╨║╤А╤Л╤В╤Л╨╣ ╤Б╨╗╨╛╨╣*)
         j := 0;
         while !j < NumHidden do
         ( 
@@ -434,7 +434,7 @@ in
           k := !k + 1
         );
         
-      if DoOut andalso Int.rem(!epoch, 100) = 0 then (*отладочный вывод*)
+      if DoOut andalso Int.rem(!epoch, 100) = 0 then (*╨╛╤В╨╗╨░╨┤╨╛╤З╨╜╤Л╨╣ ╨▓╤Л╨▓╨╛╨┤*)
         print ("epoch=" ^ Int.toString(!epoch) ^ ", error=" ^ Real.toString(!Error) ^ "\n")
       else
       ();
@@ -455,7 +455,7 @@ in
 end
 end
 
-(*подача сигнала на вход сети и получение результата*)
+(*╨┐╨╛╨┤╨░╤З╨░ ╤Б╨╕╨│╨╜╨░╨╗╨░ ╨╜╨░ ╨▓╤Е╨╛╨┤ ╤Б╨╡╤В╨╕ ╨╕ ╨┐╨╛╨╗╤Г╤З╨╡╨╜╨╕╨╡ ╤А╨╡╨╖╤Г╨╗╤М╤В╨░╤В╨░*)
 fun getoutput(BeInput)=
 let
   val Input=makevector(!NUMIN,0.0)
@@ -471,7 +471,7 @@ let
   and i=ref 0
   and j=ref 0
 in
-    (*нормализация входа*)
+    (*╨╜╨╛╤А╨╝╨░╨╗╨╕╨╖╨░╤Ж╨╕╤П ╨▓╤Е╨╛╨┤╨░*)
     k := 0;
     while !k < NumInput do
     (
@@ -479,7 +479,7 @@ in
       k := !k +1
     );
     
-    (*активация скрытого слоя*)
+    (*╨░╨║╤В╨╕╨▓╨░╤Ж╨╕╤П ╤Б╨║╤А╤Л╤В╨╛╨│╨╛ ╤Б╨╗╨╛╤П*)
     j := 0;
     while !j < NumHidden do
     (
@@ -494,7 +494,7 @@ in
       j := !j + 1
     );
     
-    (*активация выходного слоя*)
+    (*╨░╨║╤В╨╕╨▓╨░╤Ж╨╕╤П ╨▓╤Л╤Е╨╛╨┤╨╜╨╛╨│╨╛ ╤Б╨╗╨╛╤П*)
     k := 0;
     while !k < NumOutput do
     (
@@ -509,7 +509,7 @@ in
       k := !k +1
     );
     
-    (*денормализация выхода*)
+    (*╨┤╨╡╨╜╨╛╤А╨╝╨░╨╗╨╕╨╖╨░╤Ж╨╕╤П ╨▓╤Л╤Е╨╛╨┤╨░*)
     k := 0;
     while !k < NumOutput do
     (
@@ -519,19 +519,19 @@ in
     result
 end
 
-(*пример создания использования нейронной сети*)
+(*╨┐╤А╨╕╨╝╨╡╤А ╤Б╨╛╨╖╨┤╨░╨╜╨╕╤П ╨╕╤Б╨┐╨╛╨╗╤М╨╖╨╛╨▓╨░╨╜╨╕╤П ╨╜╨╡╨╣╤А╨╛╨╜╨╜╨╛╨╣ ╤Б╨╡╤В╨╕*)
 
 fun main()=
 let 
-  val NUMPAT=ref 60 (*число обучающих шаблонов - может переопределяться в файле*)
+  val NUMPAT=ref 60 (*╤З╨╕╤Б╨╗╨╛ ╨╛╨▒╤Г╤З╨░╤О╤Й╨╕╤Е ╤И╨░╨▒╨╗╨╛╨╜╨╛╨▓ - ╨╝╨╛╨╢╨╡╤В ╨┐╨╡╤А╨╡╨╛╨┐╤А╨╡╨┤╨╡╨╗╤П╤В╤М╤Б╤П ╨▓ ╤Д╨░╨╣╨╗╨╡*)
   and f=TextIO.openIn("etalons.txt")
 in 
-  (*форматы файлов матриц: число_строк число_столбцов данные*)
+  (*╤Д╨╛╤А╨╝╨░╤В╤Л ╤Д╨░╨╣╨╗╨╛╨▓ ╨╝╨░╤В╤А╨╕╤Ж: ╤З╨╕╤Б╨╗╨╛_╤Б╤В╤А╨╛╨║ ╤З╨╕╤Б╨╗╨╛_╤Б╤В╨╛╨╗╨▒╤Ж╨╛╨▓ ╨┤╨░╨╜╨╜╤Л╨╡*)
   NUMPAT := read_int f;
   NUMIN := read_int f;
   NUMOUT := read_int f;
   
-  NUMHID := !NUMIN * 2 + 1; (*число нейронов в скрытом слое*)
+  NUMHID := !NUMIN * 2 + 1; (*╤З╨╕╤Б╨╗╨╛ ╨╜╨╡╨╣╤А╨╛╨╜╨╛╨▓ ╨▓ ╤Б╨║╤А╤Л╤В╨╛╨╝ ╤Б╨╗╨╛╨╡*)
 
   let 
     val Input=makematrix(!NUMPAT,!NUMIN,0.0)
@@ -563,22 +563,22 @@ in
   TextIO.closeIn(f);
 
   makenetwork(!NUMIN,!NUMOUT,!NUMHID);
-  print("Размерность входа - " ^ Int.toString(!NUMIN) ^ ", размерность выхода - " ^  Int.toString(!NUMOUT) ^ 
-        ", число шаблонов - " ^ Int.toString(!NUMPAT)^ "\n");
+  print("╨а╨░╨╖╨╝╨╡╤А╨╜╨╛╤Б╤В╤М ╨▓╤Е╨╛╨┤╨░ - " ^ Int.toString(!NUMIN) ^ ", ╤А╨░╨╖╨╝╨╡╤А╨╜╨╛╤Б╤В╤М ╨▓╤Л╤Е╨╛╨┤╨░ - " ^  Int.toString(!NUMOUT) ^ 
+        ", ╤З╨╕╤Б╨╗╨╛ ╤И╨░╨▒╨╗╨╛╨╜╨╛╨▓ - " ^ Int.toString(!NUMPAT)^ "\n");
   train(Input,Output,0.000001,150000, true, "network.txt");
   (* readnetwork("network.txt"); *)
   
-  print "Исходные данные:\n";
+  print "╨Ш╤Б╤Е╨╛╨┤╨╜╤Л╨╡ ╨┤╨░╨╜╨╜╤Л╨╡:\n";
   i := 0;
 
   while !i < !NUMPAT do
   (
-    print "Вход: ";
+    print "╨Т╤Е╨╛╨┤: ";
     printvector (vectorfrommatrix(Input,!i));
     res := getoutput(vectorfrommatrix(Input, !i));
-    print " Эталонный выход: ";
+    print " ╨н╤В╨░╨╗╨╛╨╜╨╜╤Л╨╣ ╨▓╤Л╤Е╨╛╨┤: ";
     printvector (vectorfrommatrix(Output, !i));
-    print " Полученный выход: ";
+    print " ╨Я╨╛╨╗╤Г╤З╨╡╨╜╨╜╤Л╨╣ ╨▓╤Л╤Е╨╛╨┤: ";
     printvector(!res);
     if Int.rem(!i,10)=0 then
     (
@@ -591,7 +591,7 @@ in
     i := !i + 1
   )
   end;
-  print "Тестовые данные:\n";
+  print "╨в╨╡╤Б╤В╨╛╨▓╤Л╨╡ ╨┤╨░╨╜╨╜╤Л╨╡:\n";
   let
     val f=TextIO.openIn("test.txt")
     and count=ref 0
@@ -612,10 +612,10 @@ in
         setvvalue(inp, !k, read_real f);
         k := !k + 1
       );
-      print "Вход: ";
+      print "╨Т╤Е╨╛╨┤: ";
       printvector inp;
       res := getoutput(inp);
-      print " Полученный выход: ";
+      print " ╨Я╨╛╨╗╤Г╤З╨╡╨╜╨╜╤Л╨╣ ╨▓╤Л╤Е╨╛╨┤: ";
       printvector(!res);
       if Int.rem(!i,10)=0 then
       (
