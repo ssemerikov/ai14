@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Neuralnet</title>
+  <link href="style.css" rel="stylesheet">
+</head>
+<body style="height:3000px">
+
+  <h1>Нажмите на кнопку ниже</h1>
+
+  <input type="button" value="Нажмите для показа формы ввода" id="show-button">
+
+
+  <div id="prompt-form-container">
+    <form id="prompt-form">
+      <div id="prompt-message"></div>
+      <input name="text" type="text">
+      <input type="submit" value="Ок">
+      <input type="button" name="cancel" value="Отмена">
+    </form>
+  </div>
+  <script src="textProcessing.js"></script>
+  <script src="nrnt.js"></script>
+</body>
+</html>
