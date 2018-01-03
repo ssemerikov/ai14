@@ -1,4 +1,99 @@
-#lang racket
+#lang racket/gui
+
+
+
+;******************************Інтерфейс*******************************************************
+;**********************************************************************************************
+;============================ВІКНО=============================================================
+(define Вікно (new frame% 
+                   [label "Розпізнавання масті карти по зображенню"]
+                   [width 540] 
+                   [height 300] 
+                   [x 100] 
+                   [y 150] 
+                   [style '(no-system-menu metal)]
+                   [alignment '(left top)] 
+                   ))
+
+
+;=============================ПАНЕЛЬ-ОСНОВНА===================================================
+(define Панель (new horizontal-panel%
+                    [parent Вікно]
+                    [min-width 540]
+                    [min-height 300]
+                    [alignment '(left center)]
+                    ))
+;=============================ПАНЕЛЬ-ЗЛІВА=====================================================
+(define Панель-зліва (new vertical-panel%
+                          [parent Панель]
+                          [min-width 240] 
+                          [min-height 300] 
+                          [alignment '(center center)]
+                          ))
+;=============================ПАНЕЛЬ-СПРАВА====================================================
+(define Панель-справа (new vertical-panel%
+                           [parent Панель]
+                           [min-width 300]
+                           [min-height 300] 
+                           [alignment '(center center)] 
+                           ))
+
+
+
+;=============================КНОПКА-1.=========================================
+(define Кнопка-розпізнати (new button% 
+                               [parent Панель-зліва] 
+                               [min-width 200]	 
+                               [min-height 50]
+                               [vert-margin 10]
+                               [horiz-margin 10] 
+                               [callback (lambda (button event) (send Рамка show #t))]
+                               [label "Распознать масть"]))
+
+(define Рамка (new frame%
+                   [label "Входные данные"]
+                   [width 300]
+                   [height 100]))
+(define Поле (new text-field% 
+                  [label "Ввести адрес:"]
+                  [min-width 300]
+                  [parent Рамка]
+                  ))
+(define Прийняти (new button% 
+                      [parent Рамка] 
+                      [label "Ввести адрес"] 
+                      [min-width 200] 
+                      [callback (lambda (button event) 
+                                  (define x1  (send Поле get-value))
+                                  (define listtt  '())
+                                  (do ((i 0 (+ i 1)))
+                                    ((= i (- (string-length x1) 1)))
+                                     (when (not (equal? (string-ref x1 i) #\space))
+                                         (set! listtt (append listtt (list (string->number (string (string-ref x1 i))))))
+                                     
+                                         )
+                                     )
+                       
+                                      (set! z (list->vector listtt)) 
+                                 (bmprec z)
+                                  )]))
+
+(define z '()) 
+
+;=============================КНОПКА-2==========================================
+(define Кнопка-вихід (new button% 
+                          [parent Панель-зліва] 
+                          [min-width 200]	 
+                          [min-height 50] 
+                          [vert-margin 10] 
+                          [horiz-margin 10] 
+                          [callback (lambda (button event) (send Вікно on-exit))]
+                          [label "Виход"]))
+(send Вікно show #t) ;відображення вікна
+;*******************************************************************************************************************************************************************
+;************************************************************************Інтерфейс**********************************************************************************
+;*******************************************************************************************************************************************************************
+
 
 
 (require srfi/25)
@@ -1154,14 +1249,14 @@
   )
 
 
-(main)
 
-(define (bmprec)
+
+(define (bmprec z)
 
 
 (define size (file-size "4.bmp"))
- (define what (open-input-file "22.bmp" #:mode 'binary))
-  (define f (open-output-file "test.txt" #:mode 'binary   #:exists 'replace) )
+ (define what (open-input-file z #:mode 'binary))
+  (define f (open-output-file "text.txt" #:mode 'binary   #:exists 'replace) )
     (fprintf f "1 2030\r\n")
 
          (for ([element (bytes->list (read-bytes size what))])
@@ -1170,5 +1265,6 @@
            (fprintf f "~A " element) 
       ) 
   (close-output-port f)
+  (main)
 )
-(bmprec)
+;(bmprec)
