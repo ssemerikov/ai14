@@ -485,7 +485,7 @@
   (if (string? s)
       (let ((str s))
         (do ((i 0 (+ i 1)))
-          ((>= i (string-length s)))
+          ((>= i NUMIN))
           (vector-set! v i (char->integer (string-ref s i))))
         )
       (error "not string")
@@ -590,7 +590,7 @@
            ))
   (newline)
   
-  (train Input Output 0.01 300000 #t)
+  (train Input Output 0.000001 30000 #t)
   (savematrix "wih.txt" WeightIH (+ NUMIN 1) NUMHID)
   (savematrix "who.txt" WeightHO (+ NUMHID 1) NUMOUT)
   
