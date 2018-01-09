@@ -44,13 +44,23 @@
 
 
 ;=============================КНОПКА-1.=========================================
+(define Кнопка-еталон (new button% 
+                               [parent Панель-зліва] 
+                               [min-width 250]	 
+                               [min-height 50]
+                               [vert-margin 10]
+                               [horiz-margin 200] 
+                               [callback (lambda (button event) (begin (bmprec1)
+(send Повідомлення set-label "Еталон сформовано") 
+))]
+                               [label "Створити еталон"]))
 (define Кнопка-навчання (new button% 
                                [parent Панель-зліва] 
                                [min-width 250]	 
                                [min-height 50]
                                [vert-margin 10]
                                [horiz-margin 200] 
-                               [callback (lambda (button event) (begin 
+                               [callback (lambda (button event) (begin (bmprec1)
 (main) 
 (send Повідомлення set-label "Навчання успішно завершено") 
 ))]
@@ -1294,3 +1304,53 @@
   
 ))
 ;(bmprec)
+(define (bmprec1)
+
+(define size (file-size "1.bmp"))
+ 
+  (define f (open-output-file "etalons.txt" #:mode 'binary   #:exists 'replace) )
+    (fprintf f "8 2030 4\r\n")
+(define what (open-input-file "1.bmp" #:mode 'binary))
+         (for ([element (bytes->list (read-bytes size what))])
+           (fprintf f "~A " element) 
+      )
+  (fprintf f "\r\n1 0 0 0\r\n")
+  (set! what (open-input-file "2.bmp" #:mode 'binary))
+         (for ([element (bytes->list (read-bytes size what))])
+           (fprintf f "~A " element) 
+      )
+  (fprintf f "\r\n0 1 0 0\r\n")
+  (set! what (open-input-file "3.bmp" #:mode 'binary))
+         (for ([element (bytes->list (read-bytes size what))])
+           (fprintf f "~A " element) 
+      )
+  (fprintf f "\r\n0 0 1 0\r\n")
+  (set! what (open-input-file "4.bmp" #:mode 'binary))
+         (for ([element (bytes->list (read-bytes size what))])
+           (fprintf f "~A " element) 
+      )
+  (fprintf f "\r\n0 0 0 1\r\n")
+  (set! what (open-input-file "11.bmp" #:mode 'binary))
+         (for ([element (bytes->list (read-bytes size what))])
+           (fprintf f "~A " element) 
+      )
+  (fprintf f "\r\n1 0 0 0\r\n")
+  (set! what (open-input-file "22.bmp" #:mode 'binary))
+         (for ([element (bytes->list (read-bytes size what))])
+           (fprintf f "~A " element) 
+      )
+  (fprintf f "\r\n0 1 0 0\r\n")
+  (set! what (open-input-file "33.bmp" #:mode 'binary))
+         (for ([element (bytes->list (read-bytes size what))])
+           (fprintf f "~A " element) 
+      )
+  (fprintf f "\r\n0 0 1 0\r\n")
+  (set! what (open-input-file "44.bmp" #:mode 'binary))
+         (for ([element (bytes->list (read-bytes size what))])
+           (fprintf f "~A " element) 
+      )
+  (fprintf f "\r\n0 0 0 1\r\n")
+  (close-output-port f)
+
+  
+)
