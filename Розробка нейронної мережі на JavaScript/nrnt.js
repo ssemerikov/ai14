@@ -42,92 +42,163 @@ function makeMatrix(m,n) {
   }
 }
 
-function vectorFromMatrix(m index) {
+//функции для получения/установки значений векторов и матриц
+function getVValue(obj,i) {
+  return obj[i];  
+}
+
+function getMVlue(obj,i,j) {
+  return obj[i][j];
+}
+
+function setVValue(vec,i,val) {
+  return vec[i] = val;
+}
+
+function setMValue(matrix,i,j,val) {
+  return matrix[i][j] = val;
+}
+
+//тут должна быть функ ando
+//функиця ниже неясна что делает array-end?
+function vectorFromMatrix(m,index) {
   function res() {
-    
+    makeVector()
+  }
+  while (!i)
+}
+//функция print-vector
+
+//*********************************************
+//создание ИНС
+//и тут неясно снова, нужно ли использовнить map.get/set или нет
+function makeNetwork(_NUMIN,_NUMOUT,_NUMHID) {
+  NUMIN = _NUMIN;
+  NUMOUT = _NUMOUT;
+  NUMHID = _NUMHID;
+
+  WeightIH = makeMatrix(NUMIN+1, NUMHID);
+  WeightHO = makeMatrix(NUMHID+!, NUMOUT);
+
+  var smallwt = 0.5;
+
+  //устанавливаем случайные весовые коэффициенты
+
+  for (var j = 0; j == NUMHID; j++) {
+    for (var i = 0; i == (1 + NUMIN); i++) {
+      setMValue(WeightIH,i,j,(2.0 * (Math.random() - 0.5) * smallwt));
+    }
+  }
+
+  for (var k = 0; k == NUMHID; k++) {
+    for (var j = 0; j == (NUMHID + 1); j++) {
+      setMValue(WeightHO,j,k,(2.0 * (Math.random() - 0.5) * smallwt));
+    }
+  }
+
+}
+
+//********************************
+//обучение нейронной сети
+
+function train(trainInput,trainTarget,err,maxCount,doOut,networkFile) {
+  var error = err + 1;
+  var eta = 0.5;
+  var alpha = 0.9;
+  var NUMPAT = trainInput[trainInput.length -1];//если array-end берет последний элемент, я не знаю !!!
+  var ranpat = makeVector(NUMPAT);
+  var numPattern = NUMPAT;
+  var numInput = NUMIN;
+  var numHidden = NUMHID;
+  var numOutput = NUMOUT;
+  //временные массивы
+  var deltaWeightIH = makeMatrix(NUMIN+1, NUMHID);
+  var deltaWeightHO = makeMatrix(NUMHID+1, NUMOUT);
+  var sumDOW = makeVector(NUMHID);
+  var deltaH = makeVector(NUMHID);
+  var deltaO = makeVector(NUMOUT);
+  var sumH = makeVector(NUMHID);
+  var hidden = makeVector(NUMHID);
+  var sumO = makeVector(NUMOUT);
+  var output = makeVector(NUMOUT);
+  var input = makeMatrix(NUMPAT, NUMIN);
+  var target = makeMatrix(NUMPAT, NUMOUT);
+
+  //копируем тренировочные матрицы во временные во избежание порчи
+
+  for (var i = 0; i == NUMHID; i++) {
+    for (var k = 0; k == (1 + NUMIN); k++) {
+      setMValue(input,i,k,(getMVlue(trainInput,i,k)));
+    }
+  }
+
+
+  for (var i = 0; i == NUMHID; i++) {
+    for (var k = 0; k == (1 + NUMOUT); k++) {
+      setMValue(target,i,k,(getMVlue(trainTarget,i,k)));
+    }
+  }
+
+
+
+//если существует файл NetworkFile - загрузим его для дообучения
+
+/*
+(cond
+      [(file-exists? NetworkFile) (read-network NetworkFile)]
+      [#t
+       (set! mini (getmvalue Input 0 0))
+       (set! maxi (getmvalue Input 0 0))
+       (set! mino (getmvalue Target 0 0))
+       (set! maxo (getmvalue Target 0 0))
+*/
+
+//тут должна быть часть с файлом которая не нужна т.к. с файлами мы не работаем
+
+//***************
+
+//поиск граничных значений в числовых массивах
+//тут снова не ясно присваивать или делать map.set??
+//мы используем обычные числовые массивы, а не k - v
+// эксперемент показал что по сути сет делает тоже что и =
+//обращение к документации racket не дало нормального обьяснения
+for (var i = 0; i == numPattern; i++) {
+  for (var k = 0; k == numInput; k++) {
+    if (mini > (getMVlue(input,i,k))) {
+      mini = getMVlue(input,i,k);
+    }else if (maxi < getMVlue(input,i,k)) {
+      maxi = getMVlue(input,i,k);
+    }
+  }
+  for (var k = 0; k == numOutput; k++) {
+    if (mini > (getMVlue(target,i,k))) {
+      mini = getMVlue(target,i,k);
+    }else if (maxi < getMVlue(target,i,k)) {
+      maxi = getMVlue(target,i,k);
+    }
   }
 }
 
-//*********************************************
-
-function main() {
-
+//нормалиация
+for (var i = 0; i == numPattern; i++) {
+  for (var k = 0; k == numInput; k++) {
+    setMValue(input,i,k,(((getMValue(input,i,k) - mini))/(maxi - mini)));
+  }
+  for (var k = 0; k == numOutput; k++) {
+    setMValue(target,i,k,(((getMValue(target,i,k) - mino))/(maxo - mino)));
+  }
 }
-main();
 
-(define (main)
 
-  //форматы файлов матриц: число_строк число_столбцов данные
-  (define f (open-input-file "etalons.txt" #:mode 'text'))
+//цикл обучения по достижению заданной ошибки или числа итераций
+//что за переменная epoch ???????? WHY?
+for (var epoch = 0; epoch == maxCount || error < err; epoch++) {
+  for (var p = 0; p == numPattern; i++) {
+    Things[i]
+  }
+}
 
-  (set! NUMPAT (read f))
-  (set! NUMIN (read f))
-  (set! NUMOUT (read f))
 
-  (set! NUMHID (+ (* NUMIN 2) 1)) ;число нейронов в скрытом слое
-  ;(set! NUMHID 2)
+}//скобка конца обучения
 
-  (define Input (make-matrix NUMPAT NUMIN))
-  (define Output (make-matrix NUMPAT NUMOUT))
-
-  (do [(i 0 (+ 1 i))] ((= i NUMPAT))
-    (do [(k 0 (+ 1 k))] ((= k NUMIN))
-      (setmvalue Input i k (read f))
-      )
-    (do [(k 0 (+ 1 k))] ((= k NUMOUT))
-      (setmvalue Output i k (read f))
-      )
-    )
-
-  (close-input-port f)
-
-  (make-network NUMIN NUMOUT NUMHID)
-
-  (define in (make-vector NUMIN))
-  (define res (make-vector NUMOUT))
-  (define out (make-vector NUMOUT))
-
-  (printf
-   "Размерность входа - ~S, размерность выхода - ~S, число шаблонов - ~S\n"
-   NUMIN NUMOUT NUMPAT
-   )
-
-  (train Input Output 0.00001 150000 #t "network.txt")
-  ;(read-network "network.txt")
-
-  (printf "Исходные данные:\n")
-  (do [(i 0 (+ 1 i)) (res null)] ((= i NUMPAT))
-    (printf "Вход: ")
-    (print-vector (vector-from-matrix Input i))
-    (set! res (getoutput (vector-from-matrix Input i)))
-    (printf " Эталонный выход: ")
-    (print-vector (vector-from-matrix Output i))
-    (printf " Полученный выход: ")
-    (print-vector res)
-    (when (zero? (remainder i 10))
-      (printf "Press Enter to continue")
-      (read-char)
-      )
-    )
-
-  (printf "Тестовые данные:\n")
-  (set! f (open-input-file "test.txt" #:mode 'text))
-
-  (define count (read f))
-  (set! NUMIN (read f))
-  (do [(i 0 (+ 1 i)) (res null)] ((= i count))
-    (do [(k 0 (+ 1 k))] ((= k NUMIN))
-      (setvvalue in k (read f))
-      )
-    (printf "Вход: ")
-    (print-vector in)
-    (set! res (getoutput in))
-    (printf " Полученный выход: ")
-    (print-vector res)
-    (when (zero? (remainder i 10))
-      (printf "Press Enter to continue")
-      (read-char)
-      )
-    )
-  (close-input-port f)
-  )
+// in progress.....
