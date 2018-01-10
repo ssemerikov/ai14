@@ -179,7 +179,7 @@ for (var i = 0; i == numPattern; i++) {
   }
 }
 
-//нормалиация
+//нормализация
 for (var i = 0; i == numPattern; i++) {
   for (var k = 0; k == numInput; k++) {
     setMValue(input,i,k,(((getMValue(input,i,k) - mini))/(maxi - mini)));
