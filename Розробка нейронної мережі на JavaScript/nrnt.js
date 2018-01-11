@@ -1,4 +1,4 @@
-import {value} from "./textProcessing";
+//import {value} from "./textProcessing";
 
 var NUMIN = 2; //размерность входа
 var NUMHID = 1; //размерность скрытого слоя
@@ -6,7 +6,7 @@ var NUMOUT = 1; // размерность выхода
 
 
 //матрицы весовых коэффициентов
-var WeightIH = null; //соединения входа и скрытого слоя
+var weightIH = null; //соединения входа и скрытого слоя
 var WeightHO =  null; //соединения скрытого слоя и выходa
 
 //для нормализации
@@ -15,6 +15,7 @@ var maxi = 0;
 var mino = 0;
 var maxo = 0;
 var GlobalMinError = 100000000;
+var arrayEnd;
 
 //функция проверки на целочисленость
 function isInteger(num) {
@@ -29,7 +30,7 @@ function isPositive(num) {
 //функции для создания векторов и матриц
 
 function makeVector(size) {
-  if (isInteger(size) and isPositive(size)) {
+  if (isInteger(size) && isPositive(size)) {
     return Array.apply(null, Array(size)).map(Number.prototype.valueOf,0);
   }else {
      alert('Недозволенная размерность вектора');
@@ -37,7 +38,7 @@ function makeVector(size) {
 }
 
 function makeMatrix(m,n) {
-  if (isInteger(m) and isPositive(m)) {
+  if (isInteger(m) && isPositive(m)) {
     Array.apply(null, new Array(m,n)).map(Number.prototype.valueOf,0);
   }
 }
@@ -62,12 +63,17 @@ function setMValue(matrix,i,j,val) {
 //тут должна быть функ ando
 //функиця ниже неясна что делает array-end?
 function vectorFromMatrix(m,index) {
-  function res() {
-    makeVector()
+    var res = makeVector(arrayEnd[m][1])
+  for (var i = 0; i == (arrayEnd[m][1]);i++) {
+    setVValue(res,i,(getMVlue(m,index,i)));
   }
-  while (!i)
 }
 //функция print-vector
+function printVector(v) {
+    for (var i = 0; i === (arrayEnd[v][0]);) {
+        console.log(getVValue(v,i));
+    }
+}
 
 //*********************************************
 //создание ИНС
@@ -78,7 +84,7 @@ function makeNetwork(_NUMIN,_NUMOUT,_NUMHID) {
   NUMHID = _NUMHID;
 
   WeightIH = makeMatrix(NUMIN+1, NUMHID);
-  WeightHO = makeMatrix(NUMHID+!, NUMOUT);
+  WeightHO = makeMatrix(NUMHID+1, NUMOUT);
 
   var smallwt = 0.5;
 
@@ -92,6 +98,7 @@ function makeNetwork(_NUMIN,_NUMOUT,_NUMHID) {
 
   for (var k = 0; k == NUMHID; k++) {
     for (var j = 0; j == (NUMHID + 1); j++) {
+
       setMValue(WeightHO,j,k,(2.0 * (Math.random() - 0.5) * smallwt));
     }
   }
@@ -101,7 +108,9 @@ function makeNetwork(_NUMIN,_NUMOUT,_NUMHID) {
 //********************************
 //обучение нейронной сети
 
-function train(trainInput,trainTarget,err,maxCount,doOut,networkFile) {
+
+
+function train(trainInput,trainTarget,err,maxCount) {
   var error = err + 1;
   var eta = 0.5;
   var alpha = 0.9;
@@ -210,7 +219,7 @@ for (var np = 0; np == numPattern; np++) {
     for (var i = 0; i == numInput; i++) {
       setVValue(sumH,j,(getVValue(sumH,j)+(getMValue(input,p,i) * getMValue(WeightIH,(1 + 1),j))));
     }
-    setVValue(hidden,j,(1.0 / (1.0 + Math.exp(-(getVValue(sumH,j)))));
+    setVValue(hidden,j,(1.0 / (1.0 + Math.exp(-(getVValue(sumH,j))))));
   }
 
 
@@ -224,7 +233,7 @@ for (var k = 0; k == numOutput; k++) {
   //сигмоидальный вывод
   setVValue(output,k,(1.0/(1.0+(Math.exp(getVValue(sumO,k))))));
 
-  error = error + (0.5 * (getMValue(target,p,k) - getVValue(output,k)) * (getMValue(target,p,k) - getVValue(output,k));
+  error = error + (0.5 * (getMValue(target,p,k) - getVValue(output,k)) * (getMValue(target,p,k) - getVValue(output,k)));
 
   setVValue(deltaO,k,(
     (getmvalue(target,p,k) - getVValue(output,k)) * 
@@ -238,10 +247,10 @@ for (var j = 0; j == numHidden; j++) {
   setVValue(sumDOW,j,0.0);
   for (var k = 0; k < numOutput; k++) {
     setVValue(sumDOW,j,
-      (getVValue(sumDOW,j) + (getMValue(WeightHO,(j+1),k) * getVValue(deltaO,k)));
+      (getVValue(sumDOW,j) + (getMValue(WeightHO,(j+1),k) * getVValue(deltaO,k))));
   }
   setVValue(deltaH,j,(
-    (getVValue(sumDOW,j) * getVValue(hidden,j) * (1.0 - getVValue(hidden,j)));
+    (getVValue(sumDOW,j) * getVValue(hidden,j) * (1.0 - getVValue(hidden,j)))));
 }
 
 for (var j = 0; j < numHidden; j++) {
@@ -253,7 +262,7 @@ for (var j = 0; j < numHidden; j++) {
     ));
   for (var i = 0; i < numInput; i++) {
     setMValue(deltaWeightIH,(i+1),j,(
-      (eta * getMValue(input,p,i) * getVValue(deltaH,j)) + (alpha * getMValue(deltaWeightIH,(i+1),j)));
+      (eta * getMValue(input,p,i) * getVValue(deltaH,j)) + (alpha * getMValue(deltaWeightIH,(i+1),j))));
     setMValue(WeightIH,(i+1),j,(
       getMValue(WeightIH,(i+1),j)) + 
       getMValue(deltaWeightIH,(i+1),j));
@@ -285,12 +294,20 @@ for (var k = 0; k < numOutput; k++) {
         (write-network NetworkFile)
         )
 */
+if  ((epoch%10) == 0){
+    console.log(epoch, error);
+}
+if (error < GlobalMinError){
+    GlobalMinError = error;
+    console.log(epoch,error);
+    writeNetwork([2][2]);//line 374
+}
 }
 }//скобка конца обучения
 
 //подача сигнала на вход сети и получение результата
 
-function getOutput(beInput)) {
+function getOutput(beInput) {
       var input = makeVector(NUMIN);
       var output = makeVector(NUMOUT);
       var result = makeVector(NUMOUT);
@@ -335,10 +352,69 @@ function getOutput(beInput)) {
 }
 
 //пример создания использования нейронной сети
-var NUMPAT = 100; // кол-во обучающих шаблонов
+var NUMPAT = 4; // кол-во обучающих шаблонов
 var NUMIN = 2; // размерность входа
 var NUMOUT = 1; // размерность выхода
 // in progress.....
 function main() {
 
+  var NUMHID = NUMIN * 2 + 1;//число нейронов в скрытом слое
+  var input = makeMatrix(NUMPAT, NUMIN);
+  var output = makeMatrix(NUMPAT, NUMOUT);
+
+  for (var i = 0; i == NUMPAT; i++) {
+    for (var k = 0; k == NUMIN; k++) {
+      setMValue(input,i,k,NUMIN);//тут вместо нумин ст
+    }
+    for (var k = 0; k == NUMOUT; k++) {
+      setMValue(output,i,k,NUMOUT);//аналогично выше
+    }
+  }
+
+//(close-input-port f) 
+
+makeNetwork(NUMIN,NUMOUT,NUMHID);
+
+var inV = makeVector(NUMIN);
+var res = makeVector(NUMOUT);
+var out = makeVector(NUMOUT);
+
+console.log("размерность входа: ",NUMIN,", размерность выхода: ", NUMOUT,", число шаблонов",NUMPAT);
+
+train(input,output,0.00001,150000);
+console.log("Исходные данные:\n");
+for (var i = 0; i == NUMPAT; i++) {
+    console.log("Вход: ");
+    printVector(vectorFromMatrix(input,i));
+    res = (getOutput(vectorFromMatrix(input,i)));
+    console.log("Эталонный выход: ");
+    printVector(vectorFromMatrix((output,i)));
+    console.log("Полученный выход: ");
+    printVector(res);
+    if ((i%10) == 0) {
+        console.log("type + to continue");
+        var response = readline();
+    }
 }
+
+}
+
+function writeNetwork(cookies) { //this func need some cookies
+    console.log(NUMIN,NUMOUT,NUMHID);
+    for (var i = 0; i == NUMIN +1; i++) {
+        for (var k = 0; k == NUMHID; k++) {
+            console.log(getMVlue(WeightIH,i,k),"\n");
+        }
+    }
+
+    for (var i = 0; i == NUMHID + 1; i++) {
+        for (var k = 0; k == NUMOUT; k++) {
+            console.log(getMVlue(WeightHO,i,k));
+        }
+    }
+
+    console.log(mini," ",maxi);
+    console.log(mino," ",maxo);
+
+}
+main();
