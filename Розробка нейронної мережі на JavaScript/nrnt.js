@@ -179,7 +179,7 @@ for (var i = 0; i == numPattern; i++) {
   }
 }
 
-//нормализация
+//нормалиация
 for (var i = 0; i == numPattern; i++) {
   for (var k = 0; k == numInput; k++) {
     setMValue(input,i,k,(((getMValue(input,i,k) - mini))/(maxi - mini)));
@@ -193,12 +193,152 @@ for (var i = 0; i == numPattern; i++) {
 //цикл обучения по достижению заданной ошибки или числа итераций
 //что за переменная epoch ???????? WHY?
 for (var epoch = 0; epoch == maxCount || error < err; epoch++) {
-  for (var p = 0; p == numPattern; i++) {
-    Things[i]
+  //перемешиваем шаблоны
+  for (var p = 0; p == numPattern; p++) {
+    setVValue(ranpat,p,Math.random(numPattern));
+  }
+  error = 0.0;
+
+//цикл обучения по шаблонам
+for (var np = 0; np == numPattern; np++) {
+  getVValue(ranpat,0);
+  getVValue(ranpat,np);
+  //выбираем шаблон
+  //активация скрытого слоя
+  for (var j = 0; j == numHidden; j++) {
+    setVValue(sumH,j,getMValue(WeightIH,0,j));
+    for (var i = 0; i == numInput; i++) {
+      setVValue(sumH,j,(getVValue(sumH,j)+(getMValue(input,p,i) * getMValue(WeightIH,(1 + 1),j))));
+    }
+    setVValue(hidden,j,(1.0 / (1.0 + Math.exp(-(getVValue(sumH,j)))));
+  }
+
+
+//активация выходного слоя и вычисление ошибки
+for (var k = 0; k == numOutput; k++) {
+  setVValue(sumO,k,getMValue(WeightHO,0,k));
+  for (var j = 0; j == numHidden; j++) {
+    setVValue(sumO,k,(getVValue(sumO,k)+ (getVValue(hidden,j) * getMValue(WeightHO,(j+1),k))));
+  }
+
+  //сигмоидальный вывод
+  setVValue(output,k,(1.0/(1.0+(Math.exp(getVValue(sumO,k))))));
+
+  error = error + (0.5 * (getMValue(target,p,k) - getVValue(output,k)) * (getMValue(target,p,k) - getVValue(output,k));
+
+  setVValue(deltaO,k,(
+    (getmvalue(target,p,k) - getVValue(output,k)) * 
+    getVValue(output,k) *
+    (1.0 - getVValue(output,k))
+    ));
+}
+
+//обратное распространение ошибки на скрытый слой
+for (var j = 0; j == numHidden; j++) {
+  setVValue(sumDOW,j,0.0);
+  for (var k = 0; k < numOutput; k++) {
+    setVValue(sumDOW,j,
+      (getVValue(sumDOW,j) + (getMValue(WeightHO,(j+1),k) * getVValue(deltaO,k)));
+  }
+  setVValue(deltaH,j,(
+    (getVValue(sumDOW,j) * getVValue(hidden,j) * (1.0 - getVValue(hidden,j)));
+}
+
+for (var j = 0; j < numHidden; j++) {
+  setMValue(deltaWeightIH,0,j,(
+    (eta * getVValue(deltaH,j) + (alpha * getMValue(deltaWeightIH,0,j)))
+    ));
+  setMValue(WeightIH,0,j,(
+    (getMValue(WeightIH,0,j) + getMValue(deltaWeightIH,0,j))
+    ));
+  for (var i = 0; i < numInput; i++) {
+    setMValue(deltaWeightIH,(i+1),j,(
+      (eta * getMValue(input,p,i) * getVValue(deltaH,j)) + (alpha * getMValue(deltaWeightIH,(i+1),j)));
+    setMValue(WeightIH,(i+1),j,(
+      getMValue(WeightIH,(i+1),j)) + 
+      getMValue(deltaWeightIH,(i+1),j));
   }
 }
 
+for (var k = 0; k < numOutput; k++) {
+  setMValue(deltaWeightHO,0,k,(
+    (eta * getVValue(deltaO,k)) + (alpha * getMValue(deltaWeightHO,0,k))));
+  setMValue(WeightHO,0,k,(
+    getMValue(WeightHO,0,k) + getMValue(deltaWeightHO,0,k)));
+  for (var j = 0; j < numHidden; j++) {
+    setMValue(deltaWeightHO,(j+1),k,(
+      (eta * getVValue(hidden,j) * getVValue(deltaO,k) +
+        (alpha * getMValue(deltaWeightHO,(j+1),k)))));
+    setMValue(WeightHO,(j+1),k,(
+      getMValue(WeightHO,(j+1),k) + getMValue(deltaWeightHO,(j+1),k)));
+  }
+}
+}//скобка конца цикла обучения по шаблонам
 
+/* н
+(when (and DoOut (= (remainder epoch 10) 0));отладочный вывод
+        (printf "epoch=~S, error=~S\n" epoch Error)
+        )
+      (when (< Error GlobalMinError)
+        (set! GlobalMinError Error)
+        (printf "epoch=~S, (min)error=~S\n" epoch Error)
+        (write-network NetworkFile)
+        )
+*/
+}
 }//скобка конца обучения
 
+//подача сигнала на вход сети и получение результата
+
+function getOutput(beInput)) {
+      var input = makeVector(NUMIN);
+      var output = makeVector(NUMOUT);
+      var result = makeVector(NUMOUT);
+      var sumH = makeVector(NUMHID);
+      var hidden = makeVector(NUMHID);
+      var sumO = makeVector(NUMOUT);
+      var numInput = NUMIN;
+      var numHidden = NUMHID;
+      var numOutput = NUMOUT;
+
+      //нормализация входа
+      for (var k = 0; k == numInput; k++) {
+        setVValue(input,k,(
+          (getVValue(beInput,k) - mini) /
+          (maxi - mini)));
+      }
+      //активация скрытого слоя
+      for (var j = 0; j == numHidden; j++) {
+        setVValue(sumH,j,(getMValue(WeightIH,0,j)));
+        for (var i = 0; i == numInput; i++) {
+          setVValue(sumH,j,(
+            getVValue(sumH,j) + (getVValue(input,i) * getMValue(WeightIH,(i+1),j))));
+        }
+        setVValue(hidden,j,(
+          1.0 / (1.0 + Math.exp(-(getVValue(sumH,j))))));
+      }
+      //активация выходного слоя
+      for (var k = 0; k == numOutput; k++) {
+        setVValue(sumO,k,getMValue(WeightHO,0,k));
+          for (var j = 0; j == numHidden; j++) {
+          setVValue(sumO,k,(getVValue(sumO,k)+ (getVValue(hidden,j) * getMValue(WeightHO,(j+1),k))));
+        }
+        //сигмоидальный вывод
+        setVValue(output,k,(1.0/(1.0+(Math.exp(getVValue(sumO,k))))));
+      }
+
+      //денормализация выхода
+      for (var k = 0; k < numOutput; k++) {
+        setVValue(result,k,(
+          (getVValue(output,k) * (maxo - mino)) + mino));
+      }
+}
+
+//пример создания использования нейронной сети
+var NUMPAT = 100; // кол-во обучающих шаблонов
+var NUMIN = 2; // размерность входа
+var NUMOUT = 1; // размерность выхода
 // in progress.....
+function main() {
+
+}
