@@ -297,7 +297,7 @@ if  ((epoch%10) == 0){
 if (error < GlobalMinError){
     GlobalMinError = error;
     console.log(epoch,error);
-    writeNetwork([2][2]);//line 374
+    writeNetwork();//line 374
 }
 }
 }//скобка конца обучения
@@ -361,14 +361,17 @@ function main() {
   var input = makeMatrix(NUMPAT, NUMIN);
   var output = makeMatrix(NUMPAT, NUMOUT);
 
-  for (var i = 0; i === NUMPAT; i++) {
+  //тут по идее нужно прописать инпут и аутпут вручную
+    input = [[0,1],[1,1],[1,0],[0,0]];
+    output = [[0],[1],[0],[0]]// неуверен так ли должно выглядеть
+  /*for (var i = 0; i === NUMPAT; i++) {
     for (var k = 0; k === NUMIN; k++) {
       setMValue(input,i,k,NUMIN);//тут вместо нумин ст
     }
     for (var k = 0; k === NUMOUT; k++) {
       setMValue(output,i,k,NUMOUT);//аналогично выше
     }
-  }
+  }*/
 
 //(close-input-port f) 
 
@@ -398,7 +401,7 @@ for (var i = 0; i === NUMPAT; i++) {
 
 }
 
-function writeNetwork(cookies) { //this func need some cookies
+function writeNetwork() {
     console.log(NUMIN,NUMOUT,NUMHID);
     for (var i = 0; i === NUMIN +1; i++) {
         for (var k = 0; k === NUMHID; k++) {
