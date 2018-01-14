@@ -434,20 +434,20 @@ in
           k := !k + 1
         );
         
-      if DoOut andalso Int.rem(!epoch, 100) = 0 then (*отладочный вывод*)
-        print ("epoch=" ^ Int.toString(!epoch) ^ ", error=" ^ Real.toString(!Error) ^ "\n")
-      else
-      ();
-      if !Error < !GlobalMinError then
-      (
-        GlobalMinError := !Error;
-        print ("epoch=" ^ Int.toString(!epoch) ^ ", (min)error=" ^ Real.toString(!Error) ^ "\n");
-        writenetwork(NetworkFile)
-      )
-      else
-      ();
       np := !np + 1
     );
+    if DoOut andalso Int.rem(!epoch, 100) = 0 then (*отладочный вывод*)
+      print ("epoch=" ^ Int.toString(!epoch) ^ ", error=" ^ Real.toString(!Error) ^ "\n")
+    else
+    ();
+    if !Error < !GlobalMinError then
+    (
+      GlobalMinError := !Error;
+      print ("epoch=" ^ Int.toString(!epoch) ^ ", (min)error=" ^ Real.toString(!Error) ^ "\n");
+      writenetwork(NetworkFile)
+    )
+    else
+    ();
     epoch := !epoch + 1
     end;
   writenetwork(NetworkFile);

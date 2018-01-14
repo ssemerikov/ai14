@@ -17,11 +17,6 @@ var GlobalMinError=100000000.0;
 
 /*exception SizeError of string*/
 
-function random()
-{
-  return Math.random();
-}
-
 /*функции для создания векторов и матриц*/
 
 function makevector(size, value)
@@ -86,13 +81,13 @@ function makenetwork (NUMIN0, NUMOUT0, NUMHID0)
   for(var j=0;j < NUMHID;j++)
   {
     for(var i=0;i < NUMIN+1;i++)
-      WeightIH[i][j]=2.0*(random()-0.5)*smallwt;
+      WeightIH[i][j]=2.0*(Math.random()-0.5)*smallwt;
   }
 
   for(var k=0;k < NUMOUT;k++)
   {
     for(var j=0;j < NUMHID+1;j++)
-      WeightHO[j][k]=2.0*(random()-0.5)*smallwt;
+      WeightHO[j][k]=2.0*(Math.random()-0.5)*smallwt;
   }
 }
 
@@ -100,44 +95,47 @@ function makenetwork (NUMIN0, NUMOUT0, NUMHID0)
 /*с помощью этих функций можно сохранять и 
   загружать матрицы весовых коэффициентов*/
 
+function getfiledata(filename)
+{
+  var fs = require('fs');
+  var contents = fs.readFileSync(filename, 'utf8');
+
+  var str = contents.replace(/\r/g, ' ');
+  str = str.replace(/\n/g, ' ');
+  str = str.replace(/\t/g, ' ');
+  var arr=str.split(" ");
+  var res=[];
+  var j=0;
+  for(var i=0;i<arr.length;i++)
+    if(arr[i]!="")
+      res[j++]=parseFloat(arr[i]);
+  return res;
+}
+
+
 function readnetwork(filename)
 {
-  var f=require('fs').createReadStream(filename);
+  var data=getfiledata(filename);
+  var pos=0;
+ 
+  NUMIN = data[pos++];
+  NUMOUT = data[pos++];
+  NUMHID = data[pos++];
 
-/*
-  NUMIN := read_int f;
-  NUMOUT := read_int f;
-  NUMHID := read_int f;
   makenetwork(NUMIN,NUMOUT,NUMHID);
-  i := 0;
-  while i < NUMIN+1 do
-  (   
-    k := 0;
-    while k < NUMHID do
-    (
-      WeightIH[i][k]=read_real f;
-      k := k + 1
-    );
-    i := i + 1
-  );
-  i := 0;
-  while i < NUMHID+1 do
-  (   
-    k := 0;
-    while k < NUMOUT do
-    (
-      WeightHO[i][k]=read_real f;
-      k := k + 1
-    );
-    i := i + 1
-  );
-  mini := read_real f;
-  maxi := read_real f;
-  mino := read_real f;
-  maxo := read_real f;
-  GlobalMinError := read_real f;
-  TextIO.closeIn(f)
-*/
+
+  for(var i = 0;i < NUMIN+1;i++)
+    for(var k = 0;k < NUMHID;k++)
+      WeightIH[i][k]=data[pos++];
+  
+  for(var i = 0;i < NUMHID+1;i++)
+    for(var k = 0;k < NUMOUT;k++)
+      WeightHO[i][k]=data[pos++];
+  mini = data[pos++];
+  maxi = data[pos++];
+  mino = data[pos++];
+  maxo = data[pos++];
+  GlobalMinError = data[pos++];
 }
 
 function writenetwork(filename)
@@ -164,426 +162,276 @@ function writenetwork(filename)
 }
 
 
-/*
-var m=makenetwork(3,4,5);
-readnetwork("network.txt");
-writenetwork("test.txt");
-*/
-
-/*
-
-
-
-/*обучение нейронной сети*)
-fun train(TrainInput,TrainTarget,Err,MaxCount,DoOut,NetworkFile)=
-let
-  val NUMPAT=Array2.nRows(TrainInput) /*число обучающих шаблонов*)
-in
-let
-  val Error=ref (Err+1.0)
-  and eta=0.5
-  and alpha=0.9
-  and ranpat=makevector(NUMPAT,0)
-  and NumPattern=NUMPAT
-  and NumInput=(NUMIN)
-  and NumHidden=(NUMHID)
-  and NumOutput=(NUMOUT)
-         /*временные массивы*)
-  and DeltaWeightIH=makematrix(1+ NUMIN,NUMHID, 0.0)
-  and DeltaWeightHO=makematrix(1+ NUMHID,NUMOUT, 0.0)
-  and SumDOW=makevector(NUMHID,0.0)
-  and DeltaH=makevector(NUMHID,0.0)
-  and DeltaO=makevector(NUMOUT,0.0)
-  and SumH=makevector(NUMHID,0.0)
-  and Hidden=makevector(NUMHID,0.0)
-  and SumO=makevector(NUMOUT,0.0)
-  and Output=makevector(NUMOUT,0.0)
-  and Input=makematrix(NUMPAT,NUMIN, 0.0)
-  and Target=makematrix(NUMPAT,NUMOUT, 0.0)
-  and i=ref 0
-  and k=ref 0
-  and epoch=ref 0
-in
+/*обучение нейронной сети*/
+function train(TrainInput,TrainTarget,Err,MaxCount,DoOut,NetworkFile)
+{
+  var NUMPAT=TrainInput.length; /*число обучающих шаблонов*/
+  var Error=Err+1.0;
+  var eta=0.5;
+  var alpha=0.9;
+  var ranpat=makevector(NUMPAT,0);
+  var NumPattern=NUMPAT;
+  var NumInput=NUMIN;
+  var NumHidden=NUMHID;
+  var NumOutput=NUMOUT;
+         /*временные массивы*/
+  var DeltaWeightIH=makematrix(1+ NUMIN,NUMHID, 0.0);
+  var DeltaWeightHO=makematrix(1+ NUMHID,NUMOUT, 0.0);
+  var SumDOW=makevector(NUMHID,0.0);
+  var DeltaH=makevector(NUMHID,0.0);
+  var DeltaO=makevector(NUMOUT,0.0);
+  var SumH=makevector(NUMHID,0.0);
+  var Hidden=makevector(NUMHID,0.0);
+  var SumO=makevector(NUMOUT,0.0);
+  var Output=makevector(NUMOUT,0.0);
+  var Input=makematrix(NUMPAT,NUMIN, 0.0);
+  var Target=makematrix(NUMPAT,NUMOUT, 0.0);
     
-    /*копируем тренировочные матрицы во временные во избежание порчи*)
-  i := 0;
-  while i < NUMPAT do
-  (
-    k := 0;
-    while k < NUMIN do
-    (
+    /*копируем тренировочные матрицы во временные во избежание порчи*/
+  for(var i=0;i < NUMPAT;i++)
+    for(var k=0;k < NUMIN;k++)
       Input[i][k]=TrainInput[i][k];
-      k := k + 1
-    );
-    i := i + 1
-  );
 
-  i := 0;
-  while i < NUMPAT do
-  (
-    k := 0;
-    while k < NUMOUT do
-    (
+  for(var i=0;i < NUMPAT;i++)
+    for(var k=0;k < NUMOUT;k++)
       Target[i][k]=TrainTarget[i][k];
-      k := k + 1
-    );
-    i := i + 1
-  );
-    /*если существует файл NetworkFile - загрузим его для дообучения*)
+    /*если существует файл NetworkFile - загрузим его для дообучения*/
 
-    if FileSys.access(NetworkFile,[]) then 
-      readnetwork(NetworkFile)
-    else
-    (
-       mini := Input[0][0];
-       maxi := Input[0][0];
-       mino := Target[0][0];
-       maxo := Target[0][0];
-    
-       /*поиск граничных значений в числовых массивах*)
-       i := 0;
-       while i < NumPattern do
-       (
-         k := 0;
-         while k < NumInput do
-         (
-           if mini > Input[i][k] then
-             mini := Input[i][k]
-           else
-             ();
-           if maxi < Input[i][k] then
-             maxi := Input[i][k]
-           else
-             ();
-           k := k + 1
-         );
-         k := 0;
-         while k < NumOutput do
-         (
-           if mino > Target[i][k] then
-             mino := Target[i][k]
-           else
-             ();
-           if maxo < Target[i][k] then
-             maxo := Target[i][k]
-           else
-             ();
-           k := k + 1
-         );
-         i := i + 1
-       )
-    );
-    
-    /*нормализация*)
-    i := 0;       
-    while i < NumPattern do
-    (         
-      k := 0; 
-      while k < NumInput do
-      (
-        Input[i][k]=(Input[i][k] - mini) / (maxi - mini);
-        k := k + 1
-      );
-      k := 0;
-      while k < NumOutput do
-      (
-        Target[i][k]=(Target[i][k] - mino) / (maxo - mino);
-        k := k + 1
-      );       
-      i := i + 1
-    );              
+  if(require('fs').existsSync(NetworkFile))
+    readnetwork(NetworkFile);
+  else
+  {
+     mini = Input[0][0];
+     maxi = Input[0][0];
+     mino = Target[0][0];
+     maxo = Target[0][0];
+  
+     /*поиск граничных значений в числовых массивах*/
+     for(var i = 0;i < NumPattern;i++)
+     {
+       for(var k = 0;k < NumInput;k++)
+       {
+         if(mini > Input[i][k])
+           mini = Input[i][k];
+         if (maxi < Input[i][k])
+           maxi = Input[i][k];
+       }
+       for(var k = 0;k < NumOutput;k++)
+       {
+         if(mino > Target[i][k])
+           mino = Target[i][k];
+         if(maxo < Target[i][k])
+           maxo = Target[i][k];
+       }
+     }
+  }
+  
+  /*нормализация*/
+  for(var i = 0;i < NumPattern;i++)
+  {         
+    for(var k = 0; k < NumInput;k++)
+      Input[i][k]=(Input[i][k] - mini) / (maxi - mini);
+    for(var k = 0;k < NumOutput;k++)
+      Target[i][k]=(Target[i][k] - mino) / (maxo - mino);
+  }              
 
-    /*цикл обучения по достижению заданной ошибки или числа итераций*)
-    epoch := 0;
-    while epoch < MaxCount andalso GlobalMinError >= Err do
-    let
-      val p=ref 0
-      and gen=Random.newgen()
-      and np=ref 0
-      and j=ref 0
-    in
-      /*перемешиваем шаблоны*)
-      while p<NumPattern do
-      (
-        ranpat[p]=Random.range(0,NumPattern) gen; 
-        p := p + 1
-      );
-      Error := 0.0;
-      /*цикл обучения по шаблонам*)
-      np := 0;
-      while np<NumPattern do
-      (
-        /*выбираем шаблон*)
-        p := ranpat[np];
-        /*активация скрытого слоя*)
-        j := 0;
-        while j < NumHidden do
-        ( 
-          SumH[j]=WeightIH[0][j];
-          i := 0;
-          while i < NumInput do
-          (
-            SumH[j]+=Input[p][i]*WeightIH[1+i][j];
-            i := i + 1
-          );
-          Hidden[j]=1.0/(1.0+Math.exp(-(SumH[j])));
-          j := j + 1
-        );
-        /*активация выходного слоя и вычисление ошибки*)
-        k := 0;
-        while k < NumOutput do
-        (
-          SumO[k]=WeightHO[0][k];
-          j := 0;
-          while j < NumHidden do
-          ( 
-            SumO[k]+=Hidden[j]*WeightHO[1+j][k];
-            j := j + 1
-          );
-          Output[k]=1.0/(1.0+Math.exp(~(SumO[k])));
-          Error+=0.5*(Target[p][k]-Output[k])*(Target[p][k]-Output[k]);
-          DeltaO[k]=(Target[p][k]- Output[k])*Output[k]*(1.0-Output[k]);
-          k := k + 1
-        );
-        /*обратное распространение ошибки на скрытый слой*)
-        j := 0;
-        while j < NumHidden do
-        ( 
-          SumDOW[j]=0.0;
-          k := 0;
-          while k < NumOutput do
-          (
-            SumDOW[j]+=WeightHO[1+j][k]*DeltaO[k];
-            k := k + 1
-          );
-          DeltaH[j]=SumDOW[j]*Hidden[j]*(1.0 -Hidden[j]);
-          j := j + 1
-        );
-        j := 0;
-        while j < NumHidden do
-        ( 
-          DeltaWeightIH[0][j]=eta*DeltaH[j]+alpha*DeltaWeightIH[0][j];
-          WeightIH[0][j]=WeightIH[0][j]+DeltaWeightIH[0][j];
-          i := 0;
-          while i < NumInput do
-          (
-            DeltaWeightIH[1+i][j]=eta*Input[p][i]*DeltaH[j]+alpha*DeltaWeightIH[1+i][j];
-            WeightIH[1+i][j]=WeightIH[1+i][j]+DeltaWeightIH[1+i][j];
-            i := i + 1
-          );
-          j := j + 1
-        );
-        k := 0;
-        while k < NumOutput do
-        (
-          DeltaWeightHO[0][k]=eta*DeltaO[k]+alpha*DeltaWeightHO[0][k];
-          WeightHO[0][k]=WeightHO[0][k]+DeltaWeightHO[0][k];
-          j := 0;
-          while j < NumHidden do
-          ( 
-            DeltaWeightHO[1+j][k]=eta*Hidden[j]*DeltaO[k]+alpha*DeltaWeightHO[1+j][k];
-            WeightHO[1+j][k]\WeightHO[1+j][k]+DeltaWeightHO[1+j][k];
-            j := j + 1
-          );
-          k := k + 1
-        );
-        
-      if DoOut andalso Int.rem(epoch, 100) = 0 then /*отладочный вывод*)
-        print ("epoch=" ^ Int.toString(epoch) ^ ", error=" ^ Real.toString(Error) ^ "\n")
-      else
-      ();
-      if Error < GlobalMinError then
-      (
-        GlobalMinError := Error;
-        print ("epoch=" ^ Int.toString(epoch) ^ ", (min)error=" ^ Real.toString(Error) ^ "\n");
-        writenetwork(NetworkFile)
-      )
-      else
-      ();
-      np := np + 1
-    );
-    epoch := epoch + 1
-    end;
+  /*цикл обучения по достижению заданной ошибки или числа итераций*/
+  for(var epoch = 0;epoch < MaxCount && GlobalMinError >= Err;epoch++)
+  {
+    /*перемешиваем шаблоны*/
+    for(var p=0;p<NumPattern;p++)
+      ranpat[p]=Math.floor(Math.random()*NumPattern); 
+    Error = 0.0;
+    /*цикл обучения по шаблонам*/
+    for(var np = 0;np<NumPattern;np++)
+    {
+      /*выбираем шаблон*/
+      p = ranpat[np];
+      /*активация скрытого слоя*/
+      for(var j = 0;j < NumHidden;j++)
+      {
+        SumH[j]=WeightIH[0][j];
+        for(var i = 0;i < NumInput;i++)
+          SumH[j]+=Input[p][i]*WeightIH[1+i][j];
+        Hidden[j]=1.0/(1.0+Math.exp(-SumH[j]));
+      }
+      /*активация выходного слоя и вычисление ошибки*/
+      for(var k = 0;k < NumOutput;k++)
+      {
+        SumO[k]=WeightHO[0][k];
+        for(var j = 0;j < NumHidden;j++)
+          SumO[k]+=Hidden[j]*WeightHO[1+j][k];
+        Output[k]=1.0/(1.0+Math.exp(-SumO[k]));
+        Error+=0.5*(Target[p][k]-Output[k])*(Target[p][k]-Output[k]);
+        DeltaO[k]=(Target[p][k]- Output[k])*Output[k]*(1.0-Output[k]);
+      }
+      /*обратное распространение ошибки на скрытый слой*/
+      for(var j = 0;j < NumHidden;j++)
+      {
+        SumDOW[j]=0.0;
+        for(var k = 0;k < NumOutput;k++)
+          SumDOW[j]+=WeightHO[1+j][k]*DeltaO[k];
+        DeltaH[j]=SumDOW[j]*Hidden[j]*(1.0 -Hidden[j]);
+      }
+      for(var j = 0;j < NumHidden;j++)
+      {
+        DeltaWeightIH[0][j]=eta*DeltaH[j]+alpha*DeltaWeightIH[0][j];
+        WeightIH[0][j]=WeightIH[0][j]+DeltaWeightIH[0][j];
+        for(var i = 0;i < NumInput;i++)
+        {
+          DeltaWeightIH[1+i][j]=eta*Input[p][i]*DeltaH[j]+alpha*DeltaWeightIH[1+i][j];
+          WeightIH[1+i][j]=WeightIH[1+i][j]+DeltaWeightIH[1+i][j];
+        }
+      }
+      for(var k = 0;k < NumOutput;k++)
+      {
+        DeltaWeightHO[0][k]=eta*DeltaO[k]+alpha*DeltaWeightHO[0][k];
+        WeightHO[0][k]=WeightHO[0][k]+DeltaWeightHO[0][k];
+        for(var j = 0;j < NumHidden;j++)
+        {
+          DeltaWeightHO[1+j][k]=eta*Hidden[j]*DeltaO[k]+alpha*DeltaWeightHO[1+j][k];
+          WeightHO[1+j][k]=WeightHO[1+j][k]+DeltaWeightHO[1+j][k];
+        }
+      }
+    }
+      
+    if(DoOut && epoch%100 == 0) /*отладочный вывод*/
+      console.log("epoch=" +epoch+", error="+Error);
+    if(Error < GlobalMinError)
+    {
+      GlobalMinError = Error;
+      console.log("epoch=" +epoch+", (min)error="+Error);
+      writenetwork(NetworkFile);
+    }
+  }
   writenetwork(NetworkFile);
-  Error
-end
-end
+  return Error;
+}
 
-/*подача сигнала на вход сети и получение результата*)
-fun getoutput(BeInput)=
-let
-  val Input=makevector(NUMIN,0.0)
-  and Output=makevector(NUMOUT,0.0)
-  and result=makevector(NUMOUT,0.0)
-  and SumH=makevector(NUMHID,0.0)
-  and Hidden=makevector(NUMHID,0.0)
-  and SumO=makevector(NUMOUT,0.0)
-  and NumInput=(NUMIN)
-  and NumHidden=(NUMHID)
-  and NumOutput=(NUMOUT)
-  and k=ref 0
-  and i=ref 0
-  and j=ref 0
-in
-    /*нормализация входа*)
-    k := 0;
-    while k < NumInput do
-    (
-      Input[k]=(BeInput[k]- mini)/(maxi - mini);
-      k := k +1
-    );
-    
-    /*активация скрытого слоя*)
-    j := 0;
-    while j < NumHidden do
-    (
-      SumH[j]=WeightIH[0][j];
-      i := 0;
-      while i < NumInput do
-      ( 
-        SumH[j]+=Input[i]*WeightIH[1+i][j];
-        i := i + 1
-      );
-      Hidden[j]=1.0/(1.0+Math.exp(~(SumH[j])));
-      j := j + 1
-    );
-    
-    /*активация выходного слоя*)
-    k := 0;
-    while k < NumOutput do
-    (
-      SumO[k]=WeightHO[0][k];
-      j := 0;
-      while j < NumHidden do
-      (
-        SumO[k]+=Hidden[j]*WeightHO[1+j][k];
-        j := j + 1
-      );
-      Output[k]=1.0/(1.0+Math.exp(~(SumO[k])));
-      k := k +1
-    );
-    
-    /*денормализация выхода*)
-    k := 0;
-    while k < NumOutput do
-    (
-      result[k]= Output[k]*(maxo - mino)+ mino);
-      k := k +1
-    );
-    result
-end
 
-/*пример создания использования нейронной сети*)
-
-fun main()=
-let 
-  val NUMPAT=ref 60 /*число обучающих шаблонов - может переопределяться в файле*)
-  and f=TextIO.openIn("etalons.txt")
-in 
-  /*форматы файлов матриц: число_строк число_столбцов данные*)
-  NUMPAT := read_int f;
-  NUMIN := read_int f;
-  NUMOUT := read_int f;
+/*подача сигнала на вход сети и получение результата*/
+function getoutput(BeInput)
+{
+  var Input=makevector(NUMIN,0.0);
+  var Output=makevector(NUMOUT,0.0);
+  var result=makevector(NUMOUT,0.0);
+  var SumH=makevector(NUMHID,0.0);
+  var Hidden=makevector(NUMHID,0.0);
+  var SumO=makevector(NUMOUT,0.0);
+  var NumInput=NUMIN;
+  var NumHidden=NUMHID;
+  var NumOutput=NUMOUT;
+  /*нормализация входа*/
+  for(var k = 0;k < NumInput;k++)
+    Input[k]=(BeInput[k]- mini)/(maxi - mini);
   
-  NUMHID := NUMIN * 2 + 1; /*число нейронов в скрытом слое*)
-
-  let 
-    val Input=makematrix(NUMPAT,NUMIN,0.0)
-    and Output=makematrix(NUMPAT,NUMOUT,0.0)
-    and i=ref 0
-    and k=ref 0
-    and inp=makevector(NUMIN,0.0)
-    and res=ref (makevector(NUMOUT,0.0))
-    and out=makevector(NUMOUT,0.0)
-  in
-  i :=0;
-  while i < NUMPAT do
-  (
-    k := 0;
-    while k < NUMIN do
-    (
-      Input[i][k]=read_real f;
-      k := k + 1
-    );
-    k := 0;
-    while k < NUMOUT do
-    (
-      Output[i][k]=read_real f;
-      k := k + 1
-    );
-    i := i + 1
-  );
+  /*активация скрытого слоя*/
+  for(var j = 0;j < NumHidden;j++)
+  {
+    SumH[j]=WeightIH[0][j];
+    for(var i = 0;i < NumInput;i++)
+      SumH[j]+=Input[i]*WeightIH[1+i][j];
+    Hidden[j]=1.0/(1.0+Math.exp(-SumH[j]));
+  }
   
-  TextIO.closeIn(f);
+  /*активация выходного слоя*/
+  for(var k = 0;k < NumOutput;k++)
+  {
+    SumO[k]=WeightHO[0][k];
+    for(var j = 0;j < NumHidden;j++)
+      SumO[k]+=Hidden[j]*WeightHO[1+j][k];
+    Output[k]=1.0/(1.0+Math.exp(-SumO[k]));
+  }
+  
+  /*денормализация выхода*/
+  for(var k = 0;k < NumOutput;k++)
+    result[k]= Output[k]*(maxo - mino)+ mino;
+  return result;
+}
 
+/*пример создания использования нейронной сети*/
+
+function readenter()
+{
+  var buf=new Buffer([0]);
+  var s=require('fs').readSync(process.stdin.fd, buf, 0, 1);
+}
+
+function main()
+{
+  var NUMPAT=60; /*число обучающих шаблонов - может переопределяться в файле*/
+  var data=getfiledata("etalons.txt");
+  var pos=0;
+
+  /*форматы файлов матриц: число_строк число_столбцов данные*/
+  NUMPAT = data[pos++];
+  NUMIN = data[pos++];
+  NUMOUT = data[pos++];
+  
+  NUMHID = NUMIN * 2 + 1; /*число нейронов в скрытом слое*/
+
+  var Input=makematrix(NUMPAT,NUMIN,0.0);
+  var Output=makematrix(NUMPAT,NUMOUT,0.0);
+  var inp=makevector(NUMIN,0.0);
+  var res=makevector(NUMOUT,0.0);
+  var out=makevector(NUMOUT,0.0);
+
+  for(var i =0;i < NUMPAT;i++)
+  {
+    for(var k = 0;k < NUMIN;k++)
+      Input[i][k]=data[pos++];
+    for(var k = 0;k < NUMOUT;k++)
+      Output[i][k]=data[pos++];
+  }
+  
   makenetwork(NUMIN,NUMOUT,NUMHID);
-  print("Размерность входа - " ^ Int.toString(NUMIN) ^ ", размерность выхода - " ^  Int.toString(NUMOUT) ^ 
-        ", число шаблонов - " ^ Int.toString(NUMPAT)^ "\n");
+  console.log("Размерность входа - " +NUMIN+ ", размерность выхода - " +NUMOUT+
+        ", число шаблонов - " +NUMPAT);
   train(Input,Output,0.000001,150000, true, "network.txt");
-  /* readnetwork("network.txt"); *)
+  /* readnetwork("network.txt"); */
   
-  print "Исходные данные:\n";
-  i := 0;
-
-  while i < NUMPAT do
-  (
-    print "Вход: ";
+  console.log("Исходные данные:");
+  for(var i = 0;i < NUMPAT;i++)
+  {
+    process.stdout.write("Вход: ");
     printvector (vectorfrommatrix(Input,i));
-    res := getoutput(vectorfrommatrix(Input, i));
-    print " Эталонный выход: ";
+    res = getoutput(vectorfrommatrix(Input, i));
+    process.stdout.write(" Эталонный выход: ");
     printvector (vectorfrommatrix(Output, i));
-    print " Полученный выход: ";
+    process.stdout.write(" Полученный выход: ");
     printvector(res);
-    if Int.rem(i,10)=0 then
-    (
-     print "Press Enter to continue";
-     TextIO.input1(TextIO.stdIn);
-     ()
-    )
-    else
-    ();
-    i := i + 1
-  )
-  end;
-  print "Тестовые данные:\n";
-  let
-    val f=TextIO.openIn("test.txt")
-    and count=ref 0
-    and i=ref 0
-    and k=ref 0
-    and inp=makevector(NUMIN,0.0)
-    and res=ref (makevector(NUMOUT,0.0))
-  in
-    count := read_int f;
-    NUMIN := read_int f;
+    if(i%10==0)
+    {
+      console.log("Press Enter to continue");
+      readenter();
+    }
+  }
+  console.log("Тестовые данные:");
 
-    i := 0;
-    while i < count do
-    (
-      k := 0;
-      while k < NUMIN do
-      (
-        inp[k]= read_real f;
-        k := k + 1
-      );
-      print "Вход: ";
-      printvector inp;
-      res := getoutput(inp);
-      print " Полученный выход: ";
-      printvector(res);
-      if Int.rem(i,10)=0 then
-      (
-       print "Press Enter to continue";
-       TextIO.input1(TextIO.stdIn);
-       ()
-      )
-      else
-      ();
-      i := i + 1
-    );
-    TextIO.closeIn(f)
-  end
-end
+  var data=getfiledata("test.txt");
+  var pos=0;
 
-val _=main()
-*/
+  count = data[pos++];
+  NUMIN = data[pos++];
+
+  for(var i = 0;i < count;i++)
+  {
+    for(var k = 0;k < NUMIN;k++)
+      inp[k]= data[pos++];
+    process.stdout.write("Вход: ");
+    printvector(inp);
+    res = getoutput(inp);
+    process.stdout.write(" Полученный выход: ");
+    printvector(res);
+    if(i%10==0)
+    {
+      console.log("Press Enter to continue");
+      readenter();
+    }
+  }
+
+}
+
+
+main();
+
