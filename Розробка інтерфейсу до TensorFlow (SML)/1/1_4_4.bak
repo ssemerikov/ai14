@@ -1,0 +1,6 @@
+#lang racket
+(define (k a b c)
+  (define (cvad e)
+    (* e e))
+  (- (* a (cvad x)) (* b (x)) (c))
+  )
