@@ -1,0 +1,20 @@
+mosmlc news.sml -o news.exe
+mosmlc news.sml -o news_train.exe
+mosmlc news.sml -o news_read.exe
+mosmlc n_news.sml -o train.exe
+mosmlc n_news.sml -o read.exe
+mosmlc kaka.sml -o kaka.exe
+mosmlc dj.sml -o dj_train.exe
+mosmlc dj.sml -o dj_read.exe
+mosmlc caesar.sml -o caesar.exe
+mosmlc qwq.sml -o qwq.exe
+
+
+load "Array2";
+load "Array";
+load "TextIO";
+load "Random";
+load "Real";
+load "Int";
+load "FileSys";
+load "Math";
